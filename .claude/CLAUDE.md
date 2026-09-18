@@ -95,7 +95,7 @@ Regole di i18n: ogni stringa visibile è traducibile. I testi traducibili **non*
 ## Workflow
 
 - **Branch**: `main` = stabile/release, `develop` = integrazione, `feature/<nome>` e `fix/<nome>` da `develop`.
-- **Commit — regola ferrea**: prima di OGNI commit proponi all'utente (1) file modificati, (2) messaggio in **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `perf:`, `test:`, `style:`), (3) mini-changelog. **Attendi l'OK esplicito**. Mai `--no-verify`, mai push senza richiesta esplicita.
+- **Commit — regola ferrea**: Claude esegue i commit, **l'utente fa i `git push`** (Claude non pusha mai). **Prima di OGNI commit chiedi la verifica all'utente**: proponi (1) file modificati, (2) messaggio in **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `perf:`, `test:`, `style:`), (3) mini-changelog, e **attendi l'OK esplicito**. Nessun trailer `Co-Authored-By` né riga "Generated with Claude Code". Usa `git commit -F -` con heredoc (titolo, riga vuota, corpo). Mai `--no-verify`.
 - **Checkpoint**: il lavoro procede per fasi; a fine fase riepiloga cosa è stato fatto, proponi il passo successivo e **fermati per conferma**.
 - Uso dei subagent (`.claude/agents/`): implementazione → `backend-php`, `blocks-gutenberg`, `ux-ui`; verifica → `performance`, `accessibility`, `qa-reviewer` (sola lettura).
 - Uso delle skill (`.claude/skills/`): `new-block`, `new-cpt`, `new-page-preset`, `theme-json-editor` — preferirle allo scaffolding manuale.
@@ -103,8 +103,8 @@ Regole di i18n: ogni stringa visibile è traducibile. I testi traducibili **non*
 
 ## Roadmap
 
-- [ ] **Fase 1** — struttura di contesto (cartelle, CLAUDE.md, agents, skills, sicurezza, git)
-- [ ] **Fase 2** — fondamenta: `style.css`, `theme.json` v3, template minimi, header/footer; tema attivabile
+- [x] **Fase 1** — struttura di contesto (cartelle, CLAUDE.md, agents, skills, sicurezza, git)
+- [x] **Fase 2** — fondamenta: `style.css`, `theme.json` v3, template minimi, header/footer; tema attivabile (attivazione verificata dall'utente)
 - [ ] Fasi successive (da definire dopo conferma): tooling (package.json, composer, phpcs), CPT, blocchi, preset di pagina, Style Variations
 
 Non generare CPT, blocchi custom o preset di pagina prima della conferma delle Fasi 1 e 2.
