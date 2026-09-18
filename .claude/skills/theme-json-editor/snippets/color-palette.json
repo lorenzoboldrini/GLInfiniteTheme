@@ -1,0 +1,16 @@
+{
+	"settings": {
+		"color": {
+			"defaultPalette": false,
+			"defaultGradients": false,
+			"palette": [
+				{ "slug": "base", "name": "Base", "color": "#ffffff" },
+				{ "slug": "surface", "name": "Surface", "color": "#f4f5f7" },
+				{ "slug": "contrast", "name": "Contrast", "color": "#111827" },
+				{ "slug": "muted", "name": "Muted", "color": "#4b5563" },
+				{ "slug": "accent", "name": "Accent", "color": "#1d4ed8" },
+				{ "slug": "accent-contrast", "name": "Accent contrast", "color": "#ffffff" }
+			]
+		}
+	}
+}

@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build output
+build/
+dist/
+*.zip
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+wp-config.php
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Logs and caches
+*.log
+npm-debug.log*
+debug.log
+.eslintcache
+.stylelintcache
+.phpunit.result.cache
+.phpcs-cache
+coverage/
+
+# OS and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Claude Code (personal overrides only; the rest of .claude/ is versioned)
+.claude/settings.local.json

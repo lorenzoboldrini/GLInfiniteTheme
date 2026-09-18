@@ -1,0 +1,36 @@
+# Files Claude must never read. gitignore syntax.
+# NOTE: enforced through the matching "permissions.deny" Read rules in .claude/settings.json.
+
+# WordPress config (DB credentials, salts)
+wp-config.php
+wp-config-*.php
+**/wp-config.php
+**/wp-config-*.php
+
+# Environment files
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Keys and certificates
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+*.jks
+id_rsa*
+id_ed25519*
+
+# Database dumps
+*.sql
+*.sql.gz
+
+# User uploads
+uploads/
+**/wp-content/uploads/
+
+# Git internals
+.git/

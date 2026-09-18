@@ -1,0 +1,25 @@
+{
+	"settings": {
+		"spacing": {
+			"defaultSpacingSizes": false,
+			"units": [ "px", "em", "rem", "%", "vw" ],
+			"spacingSizes": [
+				{ "slug": "20", "name": "1", "size": "0.5rem" },
+				{ "slug": "30", "name": "2", "size": "0.75rem" },
+				{ "slug": "40", "name": "3", "size": "1rem" },
+				{ "slug": "50", "name": "4", "size": "1.5rem" },
+				{ "slug": "60", "name": "5", "size": "2.5rem" },
+				{ "slug": "70", "name": "6", "size": "4rem" },
+				{ "slug": "80", "name": "7", "size": "6rem" }
+			]
+		},
+		"custom": {
+			"radius": {
+				"sm": "0.25rem",
+				"md": "0.5rem",
+				"lg": "1rem",
+				"pill": "999px"
+			}
+		}
+	}
+}
