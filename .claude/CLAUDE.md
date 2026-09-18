@@ -10,7 +10,8 @@ Lingua: documentazione e comunicazione in **italiano**; codice, commenti, docblo
 - **PHP 8.1+** (`Requires PHP: 8.1` nell'header). Usa type hint e return type; `declare(strict_types=1)` nei file di `inc/`.
 - **WordPress ultima stabile** (`Requires at least` = ultima major stabile al momento del rilascio).
 - **Block Theme FSE**: `theme.json` v3, `templates/*.html`, `parts/*.html`, `patterns/*.php`, `styles/*.json`.
-- **Build**: `@wordpress/scripts` (`wp-scripts`) per i blocchi in `src/blocks/` → output in `build/` (non versionato).
+- **Build**: `@wordpress/scripts` (`wp-scripts`, Node ≥ 20) per i blocchi in `src/blocks/<slug>/` → output in `build/blocks/<slug>/` (non versionato: si builda in CI o dopo l'installazione con `npm ci && npm run build`).
+  Comandi: `npm run start` (watch), `npm run build`, `npm run lint:js`, `npm run lint:css`, `npm run format`. `package-lock.json` si versiona.
 - **CSS**: nativo + custom properties generate da `theme.json`. SCSS ammesso solo dentro i blocchi (compilato da `wp-scripts`).
   **Nessun framework CSS pesante in produzione** (Bootstrap, Tailwind runtime, ecc.).
 - **JS front-end**: zero per default. Se serve interattività, Interactivity API (`viewScriptModule`). Nessuna dipendenza da jQuery.
@@ -20,13 +21,14 @@ Lingua: documentazione e comunicazione in **italiano**; codice, commenti, docblo
 
 ```
 style.css  theme.json  functions.php
-inc/         logica PHP (setup, enqueue, blocks, patterns, post-types, security)
+inc/         logica PHP: setup.php, blocks/register.php (registra i blocchi compilati); previsti patterns, post-types/, security
+             functions.php fa solo bootstrap: costanti (TU_VERSION, TU_DIR) e require_once da inc/
 templates/   template FSE (.html)
 parts/       template part (header, footer, …)
 patterns/    block pattern e preset di pagina (.php)
 styles/      Style Variations (.json)
 src/blocks/  sorgenti dei blocchi custom (una cartella per blocco)
-build/       output di wp-scripts (git-ignored)
+build/       output di wp-scripts, build/blocks/<slug>/ (git-ignored)
 assets/      font self-hosted, immagini
 languages/   .pot / .po / .mo
 docs/        documentazione di progetto
@@ -87,14 +89,25 @@ Regole di i18n: ogni stringa visibile è traducibile. I testi traducibili **non*
 ## Standard di codice
 
 - **PHP**: WordPress Coding Standards (WPCS) + PHPCompatibilityWP (8.1+). Verifica con `vendor/bin/phpcs`.
-- **JS/CSS**: `@wordpress/eslint-plugin` e Stylelint via `npx wp-scripts lint-js` / `lint-style`.
+- **JS/CSS**: `@wordpress/eslint-plugin` e Stylelint via `npm run lint:js` / `npm run lint:css`. Non disattivare regole per far passare il lint: correggi il codice o dichiara la dipendenza mancante.
 - **Indentazione**: tab per PHP/JS/CSS (come WPCS), 2 spazi per JSON/YAML/MD.
 - Ogni funzione/classe/hook custom ha docblock. Commenti in inglese, spiegano il *perché*.
 - `theme.json`: sempre valido rispetto a `https://schemas.wp.org/trunk/theme.json`; colori/spaziature nei template **sempre tramite preset**, mai valori hardcoded.
 
+## Blocchi custom
+
+- Sorgenti in `src/blocks/<slug>/`, nome `tu/<slug>`, `apiVersion: 3`, `textdomain: gl-infinite-theme`. Si creano con la skill `new-block` e l'agent `blocks-gutenberg`.
+- **Registrazione**: `inc/blocks/register.php` fa `register_block_type()` su ogni `build/blocks/*/block.json` (il block.json *compilato*). Senza build non registra nulla e non genera errori. Nessun enqueue manuale: WordPress carica `style` solo dove il blocco è presente e `editorScript`/`editorStyle` solo nell'editor.
+- **Preferisci blocchi dinamici** (`render.php`, `save: () => null`). Gli attributi RichText di un blocco dinamico sono attributi semplici (`type: string`, senza `source`) e si stampano con `wp_kses_post()`; testi semplici con `esc_html()`, URL con `esc_url()`; livelli heading e allineamenti con whitelist.
+- **Eredita da `theme.json`**: usa i `supports` di core (colori, spaziature, tipografia, `align`) invece di controlli custom; i bottoni usano la classe `wp-element-button` per prendere gli stili di `elements.button`. Negli stili del blocco solo variabili `--wp--preset--*` / `--wp--custom--*`, mai valori hardcoded; i default vanno in `:where()` (bassa specificità) così le scelte dell'utente vincono.
+- **Attenzione ai `supports` inerti**: `spacing.blockGap` funziona solo con il `layout` support; senza, il controllo non fa nulla. Non dichiarare supports che il blocco non onora davvero.
+- Ogni blocco è verificato dall'utente in editor (inserimento, controlli, salvataggio/ricarica senza errori di validazione) e in frontend prima del commit; **un blocco/CPT/preset alla volta**.
+- Le dipendenze `@wordpress/*` sono `devDependencies` solo per la risoluzione ESLint: nel bundle restano external (le fornisce WordPress).
+
 ## Workflow
 
-- **Branch**: `main` = stabile/release, `develop` = integrazione, `feature/<nome>` e `fix/<nome>` da `develop`.
+- **Branch**: `main` = stabile/release, `develop` = integrazione, `feature/<nome>` e `fix/<nome>` da `develop`. Il push e il merge in `develop` (`git merge --no-ff`) li fa l'utente.
+- **Manutenzione di questo file**: Claude tiene `CLAUDE.md` aggiornato quando cambiano convenzioni, struttura, comandi, decisioni o roadmap (autorizzazione permanente dell'utente). La modifica al file segue comunque la regola dei commit qui sotto.
 - **Commit — regola ferrea**: Claude esegue i commit, **l'utente fa i `git push`** (Claude non pusha mai). **Prima di OGNI commit chiedi la verifica all'utente**: proponi (1) file modificati, (2) messaggio in **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `perf:`, `test:`, `style:`), (3) mini-changelog, e **attendi l'OK esplicito**. Nessun trailer `Co-Authored-By` né riga "Generated with Claude Code". Usa `git commit -F -` con heredoc (titolo, riga vuota, corpo). Mai `--no-verify`.
 - **Checkpoint**: il lavoro procede per fasi; a fine fase riepiloga cosa è stato fatto, proponi il passo successivo e **fermati per conferma**.
 - Uso dei subagent (`.claude/agents/`): implementazione → `backend-php`, `blocks-gutenberg`, `ux-ui`; verifica → `performance`, `accessibility`, `qa-reviewer` (sola lettura).
@@ -105,6 +118,9 @@ Regole di i18n: ogni stringa visibile è traducibile. I testi traducibili **non*
 
 - [x] **Fase 1** — struttura di contesto (cartelle, CLAUDE.md, agents, skills, sicurezza, git)
 - [x] **Fase 2** — fondamenta: `style.css`, `theme.json` v3, template minimi, header/footer; tema attivabile (attivazione verificata dall'utente)
-- [ ] Fasi successive (da definire dopo conferma): tooling (package.json, composer, phpcs), CPT, blocchi, preset di pagina, Style Variations
+- [x] **Fase 3** — pipeline `wp-scripts` + primo blocco `tu/call-to-action` (dinamico), registrazione in `inc/blocks/register.php`; verificato dall'utente in editor e frontend
+- [ ] Fasi successive (da definire dopo conferma): tooling qualità (composer, `phpcs.xml.dist`, `npm run lint` unico), `search.html`, font self-hosted, Style Variations, altri blocchi, CPT, preset di pagina
 
-Non generare CPT, blocchi custom o preset di pagina prima della conferma delle Fasi 1 e 2.
+Da fare/rivalutare: `npm audit` mostra 12 vulnerabilità nelle sole dipendenze di sviluppo (0 in produzione): rivalutare prima di ogni release. Il blocco `call-to-action` non ha `example` in `block.json` (anteprima vuota nell'inserter).
+
+Non generare altri blocchi, CPT o preset di pagina finché l'utente non conferma quello precedente.
