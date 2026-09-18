@@ -104,9 +104,20 @@ Regole di i18n: ogni stringa visibile è traducibile. I testi traducibili **non*
 - Ogni blocco è verificato dall'utente in editor (inserimento, controlli, salvataggio/ricarica senza errori di validazione) e in frontend prima del commit; **un blocco/CPT/preset alla volta**.
 - Le dipendenze `@wordpress/*` sono `devDependencies` solo per la risoluzione ESLint: nel bundle restano external (le fornisce WordPress).
 
+## Style Variations
+
+Dettagli e contrasti misurati in `docs/design-tokens.md`; guida per l'utente in `docs/guida-utente.md`.
+
+- **Token-first**: la *struttura* di header, footer, card dei post, paginazione, tabelle e ricerca sta **una sola volta** nel `theme.json` base (`styles.blocks.<blocco>.css`, solo token `--wp--custom--*`/preset). Le variation cambiano **solo i valori** dei token (`settings.custom`) e le proprietà native. Nuovo elemento grafico = struttura nel base + valori in *tutte* le variation.
+- **Copertura uniforme**: le quattro variation hanno le stesse chiavi (`settings.custom`, `styles.blocks`, `styles.elements`) e ridefiniscono per intero le liste del base (palette, fontSizes, `spacingSizes` espliciti, ombre, `fontFamilies`): nel merge le liste si **sostituiscono**. Slug identici al base (Fumetto aggiunge solo `display`).
+- **Le stringhe si sostituiscono**: una variation che definisce `styles.css` o il `css` di un blocco già presente nel base **cancella** quello del base. Oggi solo Fumetto ha `styles.css` e ripete verbatim focus ring e `prefers-reduced-motion`. Le altre non lo definiscono.
+- **Le variation applicate sono una copia nel DB**: scegliere una variation nel Site Editor la salva negli stili utente; modificare `styles/*.json` non aggiorna i siti che l'hanno già applicata (serve riselezionarla). Il `css` per-blocco del base si aggiorna subito.
+- **Compatibilità WP 6.6**: niente feature solo-7.0 (pseudo-selettori di blocco, `css` su elements). Il titolo di `default.json` è "Soft" (non "Default": esiste già la card "Default" del base).
+- **Verifica**: `validate.sh`, contrasti (≥4.5 testo, ≥3 UI/bordi dei campi) e matrice di copertura per ogni variation; un colore nuovo va misurato su tutte le coppie che lo usano (card, header, footer, campi).
+
 ## Workflow
 
-- **Branch**: `main` = stabile/release, `develop` = integrazione, `feature/<nome>` e `fix/<nome>` da `develop`. Il push e il merge in `develop` (`git merge --no-ff`) li fa l'utente.
+- **Branch**: **si lavora direttamente su `main`** (decisione dell'utente, dalla Fase 4): niente `feature/*` né `develop` finché l'utente non dice altrimenti. Claude non crea branch e non fa merge di sua iniziativa; il push lo fa sempre l'utente. Per un merge richiesto esplicitamente usa `git merge --no-ff -m` (`git merge` non accetta `-F -`).
 - **Manutenzione di questo file**: Claude tiene `CLAUDE.md` aggiornato quando cambiano convenzioni, struttura, comandi, decisioni o roadmap (autorizzazione permanente dell'utente). La modifica al file segue comunque la regola dei commit qui sotto.
 - **Commit — regola ferrea**: Claude esegue i commit, **l'utente fa i `git push`** (Claude non pusha mai). **Prima di OGNI commit chiedi la verifica all'utente**: proponi (1) file modificati, (2) messaggio in **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `perf:`, `test:`, `style:`), (3) mini-changelog, e **attendi l'OK esplicito**. Nessun trailer `Co-Authored-By` né riga "Generated with Claude Code". Usa `git commit -F -` con heredoc (titolo, riga vuota, corpo). Mai `--no-verify`.
 - **Checkpoint**: il lavoro procede per fasi; a fine fase riepiloga cosa è stato fatto, proponi il passo successivo e **fermati per conferma**.
@@ -119,7 +130,8 @@ Regole di i18n: ogni stringa visibile è traducibile. I testi traducibili **non*
 - [x] **Fase 1** — struttura di contesto (cartelle, CLAUDE.md, agents, skills, sicurezza, git)
 - [x] **Fase 2** — fondamenta: `style.css`, `theme.json` v3, template minimi, header/footer; tema attivabile (attivazione verificata dall'utente)
 - [x] **Fase 3** — pipeline `wp-scripts` + primo blocco `tu/call-to-action` (dinamico), registrazione in `inc/blocks/register.php`; verificato dall'utente in editor e frontend
-- [ ] Fasi successive (da definire dopo conferma): tooling qualità (composer, `phpcs.xml.dist`, `npm run lint` unico), `search.html`, font self-hosted, Style Variations, altri blocchi, CPT, preset di pagina
+- [ ] **Fase 4** — Style Variations (`styles/`: Soft, Minimal, Fumetto, Dark) con token di design in `theme.json`; copertura uniforme e contrasti AA verificati con script, anteprima desktop verificata con screenshot. **Da verificare dall'utente**: editor e frontend, hover/"pressione" dei pulsanti, reflow a 320 px, anteprime nel Site Editor
+- [ ] Fasi successive (da definire dopo conferma): tooling qualità (composer, `phpcs.xml.dist`, `npm run lint` unico), `search.html`, altri blocchi, CPT, preset di pagina, preload del font di Fumetto solo con la variation attiva
 
 Da fare/rivalutare: `npm audit` mostra 12 vulnerabilità nelle sole dipendenze di sviluppo (0 in produzione): rivalutare prima di ogni release. Il blocco `call-to-action` non ha `example` in `block.json` (anteprima vuota nell'inserter).
 
