@@ -1,9 +1,14 @@
 // Front-end and editor styles for tu/call-to-action.
 // Only theme.json presets are used. Defaults sit in :where() (zero specificity)
-// so colors, spacing and typography picked through block supports always win.
+// so colors, spacing, typography, border and shadow picked through block
+// supports always win. The card look (border, radius, shadow) comes from the
+// --wp--custom--card--* tokens, which each Style Variation redefines in
+// theme.json; the fallbacks cover themes that do not define them yet.
 :where(.wp-block-tu-call-to-action) {
 	padding: var(--wp--preset--spacing--60);
-	border-radius: var(--wp--custom--radius--lg);
+	border: var(--wp--custom--card--border, none);
+	border-radius: var(--wp--custom--card--radius, var(--wp--custom--radius--lg));
+	box-shadow: var(--wp--custom--card--shadow, none);
 	background-color: var(--wp--preset--color--surface);
 	color: var(--wp--preset--color--contrast);
 }
