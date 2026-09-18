@@ -1,1 +1,16 @@
-/* Theme header, base styles and tokens are added in Phase 2. */
+/*
+Theme Name: GL Infinite Theme
+Author: Lorenzo Boldrini
+Description: A universal block theme (Full Site Editing) built on design tokens and ready for Style Variations.
+Version: 0.1.0
+Requires at least: 6.6
+Tested up to: 7.1
+Requires PHP: 8.1
+License: GPL-2.0-or-later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: gl-infinite-theme
+Tags: full-site-editing, block-patterns, block-styles, style-variations, accessibility-ready, custom-colors, editor-style, wide-blocks
+
+All styles are generated from theme.json (design tokens) and per-block stylesheets.
+This file only carries the theme header on purpose: no extra CSS request on the front end.
+*/

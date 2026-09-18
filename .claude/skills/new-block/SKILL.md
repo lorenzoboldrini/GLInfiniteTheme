@@ -28,7 +28,7 @@ Lo script rifiuta di sovrascrivere un blocco esistente e non tocca altri file.
 ## 4. Verifica
 - `package.json` con `@wordpress/scripts` deve esistere; se manca, **segnalalo all'utente** (non crearlo di tua iniziativa).
 - `npm run build` → il blocco compare in `build/blocks/<slug>/`.
-- La registrazione avviene in `inc/blocks.php` scorrendo `build/blocks/*/block.json` con `register_block_type_from_metadata()`. Se il file non esiste ancora, segnalalo.
+- La registrazione avviene in `inc/blocks/register.php` scorrendo `build/blocks/*/block.json` con `register_block_type()`. Se il file non esiste ancora, segnalalo.
 - Inserisci il blocco nell'editor, salva, ricarica: nessun "block validation error".
 - Chiedi una revisione ad `accessibility` (markup/controlli) se il blocco è interattivo.
 
