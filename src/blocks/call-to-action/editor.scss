@@ -1,0 +1,17 @@
+// Editor-only styles for tu/call-to-action.
+.wp-block-tu-call-to-action {
+	// Keep empty RichText fields clickable and their placeholders readable.
+	.tu-call-to-action__title,
+	.tu-call-to-action__description {
+		min-block-size: 1lh;
+	}
+
+	[data-rich-text-placeholder]::after {
+		opacity: 0.75;
+	}
+
+	// The button is a span in the editor: show the text caret, not a link cursor.
+	.tu-call-to-action__button {
+		cursor: text;
+	}
+}

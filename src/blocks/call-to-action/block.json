@@ -1,0 +1,62 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "tu/call-to-action",
+	"version": "0.1.0",
+	"title": "Call to Action",
+	"category": "design",
+	"icon": "megaphone",
+	"description": "A short message with a title, a description and a button that invites visitors to take an action.",
+	"keywords": [ "cta", "button", "banner", "action" ],
+	"textdomain": "gl-infinite-theme",
+	"attributes": {
+		"title": {
+			"type": "string",
+			"default": ""
+		},
+		"description": {
+			"type": "string",
+			"default": ""
+		},
+		"buttonText": {
+			"type": "string",
+			"default": ""
+		},
+		"buttonUrl": {
+			"type": "string",
+			"default": ""
+		},
+		"titleLevel": {
+			"type": "integer",
+			"enum": [ 2, 3, 4, 5, 6 ],
+			"default": 2
+		},
+		"textAlign": {
+			"type": "string",
+			"enum": [ "left", "center", "right" ],
+			"default": "center"
+		}
+	},
+	"supports": {
+		"html": false,
+		"anchor": true,
+		"align": [ "wide", "full" ],
+		"color": {
+			"background": true,
+			"text": true,
+			"link": true
+		},
+		"spacing": {
+			"margin": true,
+			"padding": true
+		},
+		"typography": {
+			"fontSize": true,
+			"lineHeight": true
+		}
+	},
+	"render": "file:./render.php",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css"
+}

@@ -66,4 +66,4 @@ ls -1 "$DEST" | sed 's/^/  - /'
 echo
 echo "Next: edit block.json (attributes/supports), then run 'npm run build'."
 [[ -f "$THEME_ROOT/package.json" ]] || echo "Warning: package.json not found - @wordpress/scripts is not set up yet."
-[[ -f "$THEME_ROOT/inc/blocks.php" ]] || echo "Warning: inc/blocks.php not found - blocks are not registered yet."
+[[ -f "$THEME_ROOT/inc/blocks/register.php" ]] || echo "Warning: inc/blocks/register.php not found - blocks are not registered yet."
