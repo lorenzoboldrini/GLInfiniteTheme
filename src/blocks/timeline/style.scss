@@ -1,0 +1,137 @@
+// Front-end and editor styles for glinf/timeline.
+// Nothing visual is hardcoded: every value comes from theme.json presets
+// (--wp--preset--*) or design tokens (--wp--custom--*), so each Style
+// Variation restyles the timeline with no change here:
+// - the line is drawn with the input border token (Fumetto: thick and dark,
+//   Minimal: thin and dark, Soft and Dark: thin and muted);
+// - the marker is filled like a button (accent / accent-contrast), takes the
+//   card border and the small shadow preset, and its shape follows the pill
+//   radius token (Minimal: square);
+// - the cards of the steps use the --wp--custom--card--* tokens (see the
+//   glinf/timeline-item block).
+// The geometry (marker size, distance from the cards, gap between steps) sits
+// in :where() custom properties (zero specificity).
+// Structure (front end and editor are the same): a wrapper holds an
+// ol.glinf-timeline__list of li.wp-block-glinf-timeline-item; each li has an
+// aria-hidden span.glinf-timeline-item__rail (the line and the marker) and a
+// div.glinf-timeline-item__card (the visible step).
+// The rail of each step lives in the margin next to the card and spans from
+// its marker to the next one, so the line never overshoots the last step.
+// Mobile first: one column with the line on the inline-start side; the
+// alternating layout only starts at 768px. Only logical properties are used
+// (right-to-left languages work with no extra rules).
+// The optional step number is a CSS counter printed inside the aria-hidden
+// marker: assistive technology already reads the position from the list.
+
+:where(.wp-block-glinf-timeline) {
+	// Marker diameter, gap between the marker and the card, gap between steps.
+	--glinf-timeline-marker: var(--wp--preset--spacing--50);
+	--glinf-timeline-space: var(--wp--preset--spacing--40);
+	--glinf-timeline-gap: var(--wp--preset--spacing--50);
+}
+
+// Room for two digits.
+:where(.glinf-timeline--numbered) {
+	--glinf-timeline-marker: calc(var(--wp--preset--spacing--50) * 1.5);
+}
+
+.wp-block-glinf-timeline {
+	// Never wider than its container (reflow at 320px).
+	min-width: 0;
+	max-width: 100%;
+
+	.glinf-timeline__list {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		row-gap: var(--glinf-timeline-gap);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		// Each list has its own counter: a timeline inside a step starts at 1.
+		counter-reset: glinf-timeline-step;
+	}
+
+	// The step leaves room for the rail on the inline-start side.
+	.glinf-timeline__list > .wp-block-glinf-timeline-item {
+		position: relative;
+		margin-inline-start: calc(var(--glinf-timeline-marker) + var(--glinf-timeline-space));
+		counter-increment: glinf-timeline-step;
+	}
+
+	// The rail is as tall as the step and sits in its margin.
+	.glinf-timeline__list > .wp-block-glinf-timeline-item > .glinf-timeline-item__rail {
+		position: absolute;
+		inset-block: 0;
+		inset-inline-start: calc(-1 * (var(--glinf-timeline-marker) + var(--glinf-timeline-space)));
+		inline-size: var(--glinf-timeline-marker);
+		pointer-events: none;
+
+		// The line: from the centre of this marker to the centre of the next one
+		// (the row gap and half a marker below the step). The auto margins center
+		// it whatever the width of the border token is.
+		&::before {
+			content: "";
+			position: absolute;
+			inset-block: calc(var(--glinf-timeline-marker) / 2) calc(-1 * (var(--glinf-timeline-gap) + var(--glinf-timeline-marker) / 2));
+			inset-inline: 0;
+			inline-size: 0;
+			margin-inline: auto;
+			border-inline-start: var(--wp--custom--input--border);
+		}
+
+		// The marker: a filled shape, so it does not rely on the line color.
+		&::after {
+			content: "";
+			position: absolute;
+			inset-block-start: 0;
+			inset-inline-start: 0;
+			box-sizing: border-box;
+			display: grid;
+			place-items: center;
+			inline-size: var(--glinf-timeline-marker);
+			block-size: var(--glinf-timeline-marker);
+			border: var(--wp--custom--card--border, none);
+			border-radius: var(--wp--custom--radius--pill);
+			background: var(--wp--preset--color--accent);
+			box-shadow: var(--wp--preset--shadow--sm);
+			color: var(--wp--preset--color--accent-contrast);
+			font-size: var(--wp--preset--font-size--small);
+			line-height: 1;
+		}
+	}
+
+	// The last step has nothing to connect to.
+	.glinf-timeline__list > .wp-block-glinf-timeline-item:last-child > .glinf-timeline-item__rail::before {
+		display: none;
+	}
+
+	// Numbers: the counter is drawn inside the aria-hidden rail. Child
+	// combinators keep a plain timeline nested in a numbered one plain.
+	&.glinf-timeline--numbered > .glinf-timeline__list > .wp-block-glinf-timeline-item > .glinf-timeline-item__rail::after {
+		content: counter(glinf-timeline-step);
+	}
+
+	// Wide screens: the steps alternate on both sides of a central line. The
+	// cards take half of the width minus the marker; the rail is always
+	// centered.
+	@media (min-width: 768px) {
+
+		&.glinf-timeline--alternating > .glinf-timeline__list > .wp-block-glinf-timeline-item {
+			inline-size: calc(50% - var(--glinf-timeline-marker) / 2 - var(--glinf-timeline-space));
+			margin-inline-start: 0;
+
+			&:nth-child(odd) {
+				justify-self: start;
+
+				// The card is on the left: the rail goes on its inline-end side.
+				> .glinf-timeline-item__rail {
+					inset-inline: auto calc(-1 * (var(--glinf-timeline-marker) + var(--glinf-timeline-space)));
+				}
+			}
+
+			&:nth-child(even) {
+				justify-self: end;
+			}
+		}
+	}
+}

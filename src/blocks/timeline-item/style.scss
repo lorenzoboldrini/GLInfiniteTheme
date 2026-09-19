@@ -1,0 +1,72 @@
+// Front-end and editor styles for glinf/timeline-item.
+// Nothing visual is hardcoded: the card of the step reuses the
+// --wp--custom--card--* tokens of the core/post-template card, of
+// glinf/cpt-grid and of glinf/card, so each Style Variation restyles it with
+// no change here: Fumetto gets a thick border and an offset shadow, Minimal a
+// plain outline. With the base tokens (no border, no padding, transparent
+// background) the step is just its text next to the marker.
+// The card is an inner element, not the <li>: the rail (line and marker) is
+// positioned against the <li>, which therefore has no border or padding of
+// its own (see the glinf/timeline styles, which also place the rail).
+// Defaults sit in :where() (zero specificity) so the text and link colors
+// chosen through block supports (inline styles) always win.
+
+:where(.glinf-timeline-item__card) {
+	border: var(--wp--custom--card--border, none);
+	border-radius: var(--wp--custom--card--radius, 0);
+	padding: var(--wp--custom--card--padding, 0);
+	box-shadow: var(--wp--custom--card--shadow, none);
+	background: var(--wp--custom--card--background, transparent);
+}
+
+// The label follows the text color of the step, so it always has the same
+// contrast as the rest of the card; it stands out by size and weight.
+:where(.glinf-timeline-item__label) {
+	font-size: var(--wp--preset--font-size--small);
+	font-weight: bolder;
+}
+
+.wp-block-glinf-timeline-item {
+	// Lets the step shrink inside the grid (reflow at 320px).
+	min-width: 0;
+	overflow-wrap: break-word;
+
+	.glinf-timeline-item__card {
+		box-sizing: border-box;
+	}
+
+	// Spacing comes from the rules below, not from the default margins.
+	.glinf-timeline-item__label,
+	.glinf-timeline-item__title {
+		margin: 0;
+	}
+
+	// theme.json sets a heading color that would otherwise stop the title
+	// from following the text color chosen for the step.
+	.glinf-timeline-item__title {
+		color: inherit;
+	}
+
+	.glinf-timeline-item__label + .glinf-timeline-item__title {
+		margin-block-start: var(--wp--preset--spacing--20);
+	}
+
+	.glinf-timeline-item__label + .glinf-timeline-item__body,
+	.glinf-timeline-item__title + .glinf-timeline-item__body {
+		margin-block-start: var(--wp--preset--spacing--30);
+	}
+
+	// The card padding is the only space around the content.
+	.glinf-timeline-item__body > :first-child {
+		margin-block-start: 0;
+	}
+
+	.glinf-timeline-item__body > :last-child {
+		margin-block-end: 0;
+	}
+
+	.glinf-timeline-item__body img {
+		max-width: 100%;
+		height: auto;
+	}
+}

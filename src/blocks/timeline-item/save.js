@@ -1,0 +1,8 @@
+import { InnerBlocks } from '@wordpress/block-editor';
+
+// Dynamic block: the markup comes from render.php. The inner blocks (the body
+// of the step) are still serialized here, otherwise they would be lost on
+// save.
+export default function save() {
+	return <InnerBlocks.Content />;
+}

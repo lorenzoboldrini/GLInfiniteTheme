@@ -1,0 +1,107 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "glinf/timeline",
+	"version": "0.1.0",
+	"title": "Timeline",
+	"category": "design",
+	"icon": "clock",
+	"description": "A sequence of events or steps along a line, vertical on small screens and optionally alternating left and right on wide ones. The look follows the active Style Variation.",
+	"keywords": [ "timeline", "history", "steps", "process", "events", "roadmap" ],
+	"textdomain": "gl-infinite-theme",
+	"attributes": {
+		"layoutStyle": {
+			"type": "string",
+			"enum": [ "vertical", "alternating" ],
+			"default": "vertical"
+		},
+		"numbered": {
+			"type": "boolean",
+			"default": false
+		},
+		"titleLevel": {
+			"type": "integer",
+			"enum": [ 2, 3, 4, 5, 6 ],
+			"default": 3
+		},
+		"ariaLabel": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"providesContext": {
+		"glinf/timelineTitleLevel": "titleLevel"
+	},
+	"example": {
+		"attributes": {
+			"numbered": true
+		},
+		"innerBlocks": [
+			{
+				"name": "glinf/timeline-item",
+				"attributes": {
+					"label": "2021",
+					"title": "The idea"
+				},
+				"innerBlocks": [
+					{
+						"name": "core/paragraph",
+						"attributes": {
+							"content": "A sketch on a napkin becomes a plan."
+						}
+					}
+				]
+			},
+			{
+				"name": "glinf/timeline-item",
+				"attributes": {
+					"label": "2023",
+					"title": "The launch"
+				},
+				"innerBlocks": [
+					{
+						"name": "core/paragraph",
+						"attributes": {
+							"content": "The first version goes live."
+						}
+					}
+				]
+			},
+			{
+				"name": "glinf/timeline-item",
+				"attributes": {
+					"label": "2025",
+					"title": "Growing"
+				},
+				"innerBlocks": [
+					{
+						"name": "core/paragraph",
+						"attributes": {
+							"content": "New features and a bigger team."
+						}
+					}
+				]
+			}
+		]
+	},
+	"supports": {
+		"html": false,
+		"anchor": true,
+		"align": [ "wide", "full" ],
+		"color": {
+			"background": true,
+			"text": true
+		},
+		"spacing": {
+			"margin": true,
+			"padding": true
+		},
+		"typography": {
+			"fontSize": true
+		}
+	},
+	"render": "file:./render.php",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css"
+}

@@ -1,0 +1,13 @@
+// Editor-only styles for glinf/timeline-item.
+.wp-block-glinf-timeline-item {
+
+	// Keep empty RichText fields clickable and their placeholders readable.
+	.glinf-timeline-item__label,
+	.glinf-timeline-item__title {
+		min-block-size: 1lh;
+	}
+
+	[data-rich-text-placeholder]::after {
+		opacity: 0.75;
+	}
+}

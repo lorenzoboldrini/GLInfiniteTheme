@@ -1,0 +1,8 @@
+// Editor-only styles for glinf/timeline.
+.wp-block-glinf-timeline {
+
+	// The "Add item" button sits below the list, which is styled by style.scss.
+	.glinf-timeline__editor-actions {
+		margin-block-start: var(--wp--preset--spacing--40);
+	}
+}
