@@ -292,7 +292,6 @@ Per togliere il permesso, togli la spunta. **Sul proprio profilo** la casella è
 - **Lo slug non si cambia** dopo la creazione, né per le entità (da 3 a 14 caratteri) né per le tassonomie (da 3 a 26).
 - **Categorie e tag di WordPress** restano degli Articoli: non si possono collegare alle entità (per ora).
 - **Se cambi tema** le entità spariscono dalla bacheca e dal sito (i contenuti restano nel database). Tornando a questo tema riappaiono come prima. Se i contenuti devono sopravvivere a un cambio di tema, chiedi a chi gestisce il sito di valutare un plugin apposito.
-- **Con WordPress 6.6** i modelli dedicati alle entità non vengono creati: l'elenco e il dettaglio usano i modelli generici del tema (funzionano, ma senza la griglia di card). La card resta disponibile tra i pattern. Con WordPress 6.7 o successivi tutto è automatico.
 
 ---
 

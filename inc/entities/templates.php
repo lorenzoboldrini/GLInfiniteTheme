@@ -6,11 +6,9 @@
  * produced by the functions below from the saved configuration and handed to
  * the core registries on `init`.
  *
- * - Templates use register_block_template() (WordPress 6.7+). On older
- *   versions the function does not exist, no fallback is provided and the
- *   generic templates/single.html and templates/archive.html apply: they
- *   already work for custom post types because the Query Loop inherits the
- *   main query. A template file with the same slug in the theme, or a
+ * - Templates use register_block_template(), available since WordPress 6.7
+ *   (the theme's "Requires at least", enforced by core when the theme is
+ *   activated). A template file with the same slug in the theme, or a
  *   version customised by the user in the Site Editor, always wins over the
  *   registered one (WordPress filters them out).
  * - The card is a pattern that the archive templates include with core/pattern:
@@ -512,11 +510,6 @@ function glinf_entity_single_template_markup( array $entity, array $taxonomies )
  * @return void
  */
 function glinf_register_entity_templates(): void {
-	// WordPress < 6.7: no template registration API, generic templates apply.
-	if ( ! function_exists( 'register_block_template' ) ) {
-		return;
-	}
-
 	$config = glinf_get_config();
 
 	foreach ( $config['items'] as $entity ) {
