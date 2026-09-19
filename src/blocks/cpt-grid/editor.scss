@@ -1,0 +1,5 @@
+// Editor-only styles for glinf/cpt-grid.
+.wp-block-glinf-cpt-grid {
+	// Keep the block selectable while the server preview loads for the first time.
+	min-block-size: var(--wp--preset--spacing--60);
+}
