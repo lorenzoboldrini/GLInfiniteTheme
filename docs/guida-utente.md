@@ -244,10 +244,10 @@ Ogni termine ha una **pagina pubblica**, per esempio `iltuosito.it/settore/web/`
 Puoi cambiare l'aspetto di queste pagine, come spiegato al punto 5.
 
 ### Modificare o eliminare una tassonomia
-Nell'elenco **Taxonomies** vedi per ogni riga il **Type** (*Specific*, *Shared* o *Not attached*) e le entità collegate.
+Nell'elenco **Taxonomies** vedi per ogni riga il nome, la **chiave** (`glinf_<slug>`), l'**URL base** in uso, se è **gerarchica** (*Yes*/*No*), a cosa è collegata (colonna **Attached to**: *Specific* con il nome dell'entità, *Shared* con il numero di entità, *Not attached*) e quanti **termini** ha. Per cercare, filtrare e ordinare l'elenco vedi "Cercare, filtrare e ordinare gli elenchi" al punto 6.
 
 - **Edit**: puoi cambiare nomi, struttura e **entità collegate**. Togliere la spunta a un'entità **scollega** la tassonomia da quella entità: i termini restano salvati. **Non** puoi cambiare lo slug. Puoi invece cambiare l'**URL base**: attenzione, i vecchi indirizzi dei termini (per esempio `iltuosito.it/settore/web/`) non funzioneranno più e **non c'è nessun reindirizzamento**. L'avviso compare nel modulo.
-- **Delete**: compare una richiesta di conferma. Viene cancellata **solo la configurazione**: termini e assegnazioni restano nel database e riappaiono se ricrei una tassonomia con **lo stesso slug**.
+- **Delete**: si apre una **schermata di conferma** che ti dice cosa succede. Viene cancellata **solo la configurazione**: termini e assegnazioni restano nel database e riappaiono se ricrei una tassonomia con **lo stesso slug**. Puoi eliminare anche più tassonomie insieme (vedi "Eliminare più elementi insieme" al punto 6).
 
 ---
 
@@ -278,12 +278,39 @@ La **card** è un *pattern* (un blocco pronto da inserire). Per usarla in una tu
 
 ## 6. Modificare o eliminare un'entità
 
-Vai in **Entity Manager**: per ogni riga trovi **Edit** e **Delete**. La colonna **Content** mostra quanti contenuti ci sono; cliccando il numero li vedi.
+Vai in **Entity Manager**. In alto, sotto il titolo, trovi due **schede** (*Entities* e *Taxonomies*) per passare da una schermata all'altra: restano visibili anche nei moduli. Nell'elenco delle entità ogni riga mostra:
+
+- il **nome** (con l'icona), al plurale e, tra parentesi, al singolare; passando sopra o usando la tastiera compaiono le azioni **Edit**, **View archive** (solo se l'entità ha un archivio già raggiungibile) e **Delete**;
+- lo **slug** (il nome tecnico del tipo di contenuto, `glinf_<slug>`) e l'**URL base** in uso (per esempio `/portfolio/`);
+- **Archive**: *Yes* o *No* (sempre con la parola, non solo con un colore);
+- le **tassonomie** collegate (se non ce ne sono, vedi un trattino);
+- **Content**: quanti contenuti ci sono; cliccando il numero li vedi.
 
 - **Edit** (*Modifica*): puoi cambiare nomi, icona, features, archivio e **URL base**. **Non** puoi cambiare lo slug. Se cambi l'URL base, i vecchi indirizzi smettono di funzionare senza reindirizzamento (vedi "Cambiare l'indirizzo" al punto 2). Clicca **Update Entity** per salvare. Le tassonomie si collegano dalla schermata **Taxonomies**.
-- **Delete** (*Elimina*): compare una richiesta di conferma. Viene cancellata **solo la configurazione**: i **contenuti non vengono cancellati** e restano nel database. Se in futuro crei di nuovo un'entità con **lo stesso slug**, i vecchi contenuti riappaiono. Le **tassonomie** collegate restano, semplicemente **scollegate** da quell'entità.
+- **Delete** (*Elimina*): si apre una **schermata di conferma** con l'elenco di ciò che stai per eliminare. Viene cancellata **solo la configurazione**: i **contenuti non vengono cancellati** e restano nel database. Se in futuro crei di nuovo un'entità con **lo stesso slug**, i vecchi contenuti riappaiono. Le **tassonomie** collegate restano, semplicemente **scollegate** da quell'entità.
 
 Ricorda: tolta una feature (per esempio l'immagine in evidenza) non sparisce il dato già salvato, semplicemente non viene più mostrato.
+
+### Cercare, filtrare e ordinare gli elenchi
+
+Le due schermate (**Entities** e **Taxonomies**) hanno lo stesso comportamento.
+
+- **Ricerca**: scrivi nella casella in alto a destra e clicca **Search Entities** (o **Search Taxonomies**). Cerca in nome singolare, nome plurale, slug e URL base, senza distinguere maiuscole e minuscole.
+- **Viste**: i link sopra la tabella, con il numero di elementi tra parentesi. Per le entità: *All*, *With archive*, *Without archive*, *With taxonomies*, *Without taxonomies*. Per le tassonomie: *All*, *Specific*, *Shared*, *Not attached*, *Hierarchical*. I numeri contano sempre tutti gli elementi.
+- **Filtro a tendina**: sopra la tabella, accanto alle azioni di gruppo. Nelle entità filtra per **tassonomia collegata** (*Filter by taxonomy*), nelle tassonomie per **entità** (*Filter by entity*). Clicca **Filter** per applicarlo. Sui telefoni resta disponibile.
+- **Combinare**: vista, filtro a tendina e ricerca lavorano **insieme** (devono valere tutti). Cambiando pagina o ordinamento restano applicati.
+- **Ordinare**: clicca l'intestazione di una colonna (**Name**, **Slug**, **URL base**, **Archive**, **Taxonomies** per le entità; **Name**, **Key**, **URL base**, **Hierarchical**, **Attached to** per le tassonomie). Un secondo clic inverte l'ordine. Di partenza le righe sono in ordine alfabetico per nome (plurale). Le colonne dei contatori (*Content* e *Terms*) non si possono ordinare.
+- **Nessun risultato**: se ricerca o filtri nascondono tutto, la tabella lo dice e offre il link **Reset filters**. Se non hai ancora creato nulla, al posto della tabella vedi un riquadro con il pulsante per aggiungere il primo elemento.
+- **Opzioni schermata** (*Screen Options*, in alto a destra): scegli quante righe vedere per pagina (da 1 a 100, di partenza 20; la scelta è tua e vale per ogni elenco) e quali colonne mostrare. Con al massimo 20 entità e 20 tassonomie, di solito sta tutto in una pagina.
+
+### Eliminare più elementi insieme
+
+1. Spunta le caselle delle righe che vuoi eliminare (la casella nell'intestazione le seleziona tutte quelle della pagina).
+2. Scegli **Delete** dal menu **Bulk actions** (*Azioni di gruppo*) e clicca **Apply**.
+3. Si apre una **schermata di conferma**: elenca gli elementi scelti e spiega cosa succede. **Non è ancora stato cancellato nulla.**
+4. Clicca **Yes, delete** per confermare, oppure **Cancel** per tornare all'elenco senza cambiare niente.
+
+Dopo la conferma vedi un messaggio con il **numero** di elementi eliminati, per esempio *"3 entity configurations deleted…"*. Vale la regola di sempre: viene cancellata **solo la configurazione**. Per le **entità** i contenuti restano nel database e riappaiono se ricrei un'entità con lo stesso slug, e le tassonomie collegate restano, scollegate. Per le **tassonomie** restano termini e contenuti. Se nel frattempo qualcuno ha già eliminato gli elementi scelti, ricevi il messaggio che non ne è stato eliminato nessuno.
 
 ---
 
@@ -320,6 +347,15 @@ Vai in *Impostazioni → Permalink* e clicca **Salva le modifiche** (senza cambi
 
 **La card è vuota o non mostra l'immagine.**
 Controlla che l'entità abbia **Featured image** ed **Excerpt** tra le Features e che il contenuto abbia davvero un'immagine e un testo.
+
+**Come elimino più entità (o tassonomie) in una volta?**
+Spunta le righe nell'elenco, scegli **Delete** in *Bulk actions*, clicca **Apply** e conferma nella schermata che si apre. Vedi "Eliminare più elementi insieme" al punto 6.
+
+**Ho cliccato Delete ma non è successo niente.**
+Delete apre prima una schermata di conferma: l'eliminazione avviene solo cliccando **Yes, delete**.
+
+**L'elenco è vuoto ma so di avere delle entità.**
+Controlla se hai una ricerca, una vista o un filtro attivi: clicca **Reset filters** (o la vista **All**). Le viste e i filtri restano applicati finché non li togli.
 
 **Posso rinominare un'entità o una tassonomia?**
 Sì, i nomi (singolare e plurale) si cambiano quando vuoi. Solo lo slug è fisso.

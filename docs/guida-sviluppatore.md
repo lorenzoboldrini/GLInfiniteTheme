@@ -92,6 +92,81 @@ Decisione di progetto: il tema non salva la cronologia delle basi né registra r
 
 Nessun flush aggiuntivo. `glinf_save_config()` normalizza e scrive l'option; se il valore cambia (e cambiare `url_base` lo cambia) imposta il flag `glinf_entities_flush`, e `wp_loaded` della richiesta successiva (il redirect dopo il salvataggio) lo consuma con `flush_rewrite_rules( false )`, quando `init` ha già registrato con la nuova base. Se non cambia nulla il flag non viene impostato.
 
+## Entity Manager: le schermate di elenco (`WP_List_Table`)
+
+Riguarda `inc/entities/admin.php`, `admin-taxonomies.php`, `admin-common.php`, `list-data.php`, `list-tables.php` e `assets/css/admin-entities.css`. Le decisioni di progetto sono in `.claude/CLAUDE.md`, sezione "Entità (CPT builder)".
+
+### Chi fa cosa
+
+| File | Responsabilità |
+|---|---|
+| `list-data.php` | Logica **pura** (nessuna superglobale, nessuna query, nessuna scrittura): costruzione delle righe dalla config, lettura whitelisted della query string (`glinf_list_parse_query()`), ricerca, filtri, viste con conteggi, ordinamento, paginazione, scelta degli elementi di un'azione di gruppo (`glinf_list_sanitize_selection()`) e configurazione risultante da un'eliminazione multipla (`glinf_list_bulk_delete_config()`). Testabile senza disegnare nulla. |
+| `list-tables.php` | Le classi `GLINF_Entities_List_Table` e `GLINF_Taxonomies_List_Table`, che estendono `GLINF_Entity_Manager_List_Table` (che estende `WP_List_Table`). Solo disegno: colonne, azioni di riga, badge, viste, ricerca, paginazione. |
+| `admin-common.php` | Cose condivise dalle due schermate: intestazione, schede, riquadro "stato vuoto", schermata di conferma, accodamento del CSS, Screen Options, caricamento lazy delle classi, instradamento dell'azione di gruppo. |
+| `admin.php` / `admin-taxonomies.php` | Menu, messaggi, modulo add/edit, schermata di conferma specifica, handler `admin-post.php`. |
+
+### Caricamento lazy di `WP_List_Table`
+
+`WP_List_Table` esiste solo in wp-admin. `list-tables.php` **non** è nel bootstrap (`functions.php`): lo carica `glinf_entities_get_list_table( $kind )`, che prima fa `require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php'` e poi `require_once` del file delle classi, e tiene l'istanza in una variabile statica. Sul front-end quindi non viene mai letto. La funzione va chiamata presto (nell'hook `load-{schermata}`, prima dell'output): il costruttore di `WP_List_Table` registra il filtro `manage_{screen}_columns`, che Screen Options usa per offrire le colonne da nascondere.
+
+Il costruttore ricava la schermata dalla globale `$hook_suffix` (non da `get_current_screen()`): in wp-admin coincidono, in uno script di test va impostata a mano.
+
+### Hook della schermata
+
+Le due schermate registrano `load-{hook}` con il valore **restituito** da `add_menu_page()` / `add_submenu_page()`: il nome dell'hook di una sotto-pagina contiene il titolo del menu tradotto (`entity-manager_page_glinf-taxonomies`), quindi non si può scrivere a mano. La callback (`glinf_entities_load_screen()`) fa, nell'ordine: capability, accodamento del CSS (`admin_enqueue_scripts`), e, solo per la lista (non per `action=new|edit|confirm-delete`), creazione della tabella, `add_screen_option( 'per_page' )`, intestazioni per gli screen reader e l'eventuale azione di gruppo. Il CSS è quindi caricato **solo** sulle due schermate; JS: nessuno (le azioni di riga e la conferma sono link e form normali).
+
+### Stato dell'elenco: dalla query string alla riga
+
+```
+$_GET → glinf_list_parse_query()  (whitelist)  → state {view, filter, s, orderby, order, paged}
+config → glinf_list_build_*_rows() → righe
+righe  → glinf_list_count_views()     (conteggi delle viste, sull'insieme intero)
+righe  → glinf_list_filter_rows()     (vista AND filtro AND ricerca)
+righe  → glinf_list_sort_rows()       (spareggio sempre per plurale, poi slug)
+righe  → glinf_list_paginate()        (pagina forzata nel range)
+```
+
+Tutto in memoria (max 20 + 20 elementi): nessuna query per filtrare o ordinare. Le uniche query sono i contatori per riga (`glinf_entities_count_items()`, `glinf_taxonomies_count_terms()`), fatti solo per le righe della pagina corrente. Regole del parser: `view`/`orderby`/`order` devono essere valori noti; `filter` deve essere lo slug di una cosa che esiste (una tassonomia nella lista entità, un'entità nella lista tassonomie); `s` è testo semplice (`sanitize_text_field`) di massimo 100 caratteri; `paged` un intero; array e valori sconosciuti diventano il default. Il confronto della ricerca è `mb_stripos` se c'è mbstring, `stripos` altrimenti; l'ordinamento per testo ignora maiuscole e accenti (`remove_accents()` + `strnatcasecmp()`).
+
+`glinf_entities_list_url()` ricostruisce gli URL dallo stato **whitelisted** (mai da `REQUEST_URI`) e codifica a mano la ricerca con `rawurlencode()`: `add_query_arg()` non codifica i valori, e un `&` non codificato inietterebbe un parametro.
+
+### Due form, non uno
+
+Il core mette ricerca, filtri e tabella in un solo `<form method="get">`. Qui l'azione di gruppo deve essere **POST** con nonce, mentre ricerca e filtro devono essere **GET** (link condivisibili, preservati da ordinamento e paginazione). Soluzione in `GLINF_Entity_Manager_List_Table::render()`:
+
+- `<form id="glinf-list-filter" method="get">` contiene i campi nascosti (`page`, `view`, `orderby`, `order`) e la casella di ricerca;
+- la tabella sta in `<form id="glinf-list-bulk" method="post">` (action = URL della lista con lo stato, così un redirect torna alla stessa vista);
+- il menu a tendina del filtro e il suo pulsante, che nel markup stanno **dentro** la tabella (`extra_tablenav()`), hanno `form="glinf-list-filter"`: il browser li invia con il form GET e mai con quello POST. Ricerca e filtro si combinano perché condividono lo stesso form.
+
+Altre due differenze dal core, volute: la paginazione è disegnata da `pagination()` (link dallo stato whitelisted; la pagina corrente è testo, non c'è la casella "vai a pagina", che invierebbe un `paged` al form sbagliato) e `get_table_classes()` non include `fixed`. Le intestazioni ordinabili restano quelle del core (link da `REQUEST_URI`, sempre passati da `esc_url()`).
+
+### Eliminazione: due passi, mai un click
+
+```
+lista ──(link riga)──────────────► GET  ?action=confirm-delete&entity=<slug> ─┐
+lista ──(Bulk actions + Apply)───► POST alla stessa pagina + nonce bulk-…     ─┤ conferma (non cambia nulla)
+                                                                              ▼
+                                            POST admin-post.php  glinf_bulk_delete_{entities|taxonomies}
+                                            cap → POST → nonce → sanitize → validate → save → redirect
+```
+
+- Il **link di riga** porta alla conferma con una GET: vedere la schermata non cambia niente. Uno slug sconosciuto dà il messaggio `not_found` e la lista.
+- L'**azione di gruppo** è un POST alla pagina con il nonce `bulk-glinf-entities` / `bulk-glinf-taxonomies` (lo stampa il core in `display_tablenav()`). `glinf_entities_process_bulk_request()`, dal `load-{hook}`, verifica il nonce, legge il selettore (`action` sopra la tabella, `action2` sotto: vale quello con un'azione nota, oggi solo `delete`), sanifica gli slug e li ricorda in `glinf_entities_pending_selection()`; il render mostra la conferma. Nessuna azione o nessun elemento valido: redirect alla lista (con `nothing_selected` nel secondo caso). Un POST senza `action`/`action2` non è il form di gruppo (per esempio un Screen Options non reindirizzato dal core) e viene ignorato.
+- La conferma invia gli slug (`glinf_slugs[]`) e un **secondo nonce** (`glinf_bulk_delete_entities` / `glinf_bulk_delete_taxonomies`) a `admin-post.php`. L'handler non si fida di nulla di ciò che ha visto l'utente: `glinf_list_bulk_delete_config()` prende al massimo `GLINF_*_MAX` elementi dell'array, scarta ciò che non è una stringa, normalizza ogni slug con `glinf_normalize_slug_input()`, tiene solo quelli presenti nella config, toglie i duplicati e restituisce la nuova config con il numero di rimossi. Per le entità stacca ognuna da tutte le tassonomie nello stesso risultato. Un'unica `glinf_save_config()` (atomica), poi redirect con codice whitelisted e `glinf_count` come **intero** (letto con `absint()` e limitato da `glinf_entities_read_count_arg()`): nessun testo dell'utente finisce nell'URL o nel messaggio.
+- Gli handler singoli `glinf_delete_entity` / `glinf_delete_taxonomy` (form con `confirm()` inline) sono stati **rimossi**: una riga è una selezione di 1, e non resta un endpoint che cancella senza passare dalla conferma.
+
+Screen Options: l'opzione utente è `glinf_entities_per_page` / `glinf_taxonomies_per_page` (default 20). Il filtro `set_screen_option_{option}` (`glinf_entities_filter_screen_option()`, registrato a livello di file perché il core lo esegue in `wp-admin/admin.php`, prima del `load-`) accetta solo numeri e li limita a 1-100; qualsiasi altro valore non viene salvato.
+
+### CSS admin
+
+`assets/css/admin-entities.css`, versione `GLINF_VERSION`, dipendenze `common`, `forms`, `list-tables`. Usa solo le variabili dello schema colore dell'admin (`--wp-admin-theme-color`, `--wp-admin-theme-color-darker-20`, `--wp-admin-border-width-focus`: le definisce `body.admin-color-<schema>`), i grigi neutri che il core usa in ogni schema e proprietà logiche (`margin-inline-start`, ecc.), quindi segue lo schema scelto e le lingue RTL senza un secondo file. Le tinte dei badge usano `color-mix()` con un ripiego grigio dove non è supportato. I badge hanno sempre del testo; gli stati "spento" hanno anche il bordo tratteggiato. Il testo dei badge è un colore fisso scuro su una tinta chiara, così il contrasto non dipende dallo schema.
+
+Sotto i 783 px il core nasconde tutte le azioni in alto (`.tablenav.top .actions`) e lascia solo quelle sotto la tabella: il CSS riattiva il filtro (`.glinf-em-filter`), altrimenti su telefono non si potrebbe filtrare.
+
+### Punto riservato per la dashboard (fase C)
+
+`glinf_entities_render_dashboard( $section )` è chiamata da `glinf_entities_render_page_start()` subito sotto le schede, prima di avvisi, lista e moduli, su tutte le schermate. Oggi non stampa nulla.
+
 ## Versione minima di WordPress: 6.7
 
 Il tema dichiara `Requires at least: 6.7` perché `register_block_template()`, con cui si registrano i template di entità e tassonomie, esiste solo da 6.7. `glinf_register_entity_templates()` la chiama direttamente, senza controllare che esista.

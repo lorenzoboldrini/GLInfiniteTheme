@@ -1,14 +1,18 @@
 <?php
 /**
  * Entity Manager admin: the top-level menu and the "Entities" screen (list,
- * add/edit form and the save/delete handlers).
+ * add/edit form, delete confirmation and the save/delete handlers).
  *
  * The top-level "Entity Manager" menu has two sub-pages: "Entities" (this file,
- * `admin.php?page=glinf-entities`, which renders both the list and the form:
- * `&action=new` / `&action=edit&entity=<slug>`) and "Taxonomies" (see
- * admin-taxonomies.php). Writes go through `admin-post.php`. Every entry point
- * requires the "manage_theme_entities" capability, and every write also
- * requires a nonce. No CSS or JS is enqueued: only core wp-admin classes are used.
+ * `admin.php?page=glinf-entities`, which renders the list, the form
+ * `&action=new` / `&action=edit&entity=<slug>` and the delete confirmation
+ * `&action=confirm-delete&entity=<slug>`) and "Taxonomies" (see
+ * admin-taxonomies.php). The list is a WP_List_Table (list-tables.php); what the
+ * two screens share is in admin-common.php and the pure data logic in
+ * list-data.php. Writes go through `admin-post.php`. Every entry point requires
+ * the "manage_theme_entities" capability, and every write also requires a nonce.
+ * One stylesheet (assets/css/admin-entities.css) is enqueued, and only on the two
+ * screens of the Manager; there is no JavaScript.
  *
  * @package gl-infinite-theme
  */
@@ -34,7 +38,7 @@ const GLINF_ENTITIES_FORM_STATE_TTL = 60;
  * @return void
  */
 function glinf_entities_admin_menu(): void {
-	add_menu_page(
+	$hook = add_menu_page(
 		__( 'Entity Manager', 'gl-infinite-theme' ),
 		__( 'Entity Manager', 'gl-infinite-theme' ),
 		GLINF_ENTITIES_CAP,
@@ -52,6 +56,11 @@ function glinf_entities_admin_menu(): void {
 		GLINF_ENTITIES_PAGE,
 		'glinf_render_entities_page'
 	);
+
+	// The screen loads (before any output) through this hook: styles, Screen Options and the group action.
+	if ( is_string( $hook ) && '' !== $hook ) {
+		add_action( 'load-' . $hook, 'glinf_entities_load_entities_screen' );
+	}
 }
 add_action( 'admin_menu', 'glinf_entities_admin_menu' );
 
@@ -82,9 +91,7 @@ function glinf_entities_require_cap(): void {
  * @return void
  */
 function glinf_entities_require_post(): void {
-	$method = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : '';
-
-	if ( 'POST' !== $method ) {
+	if ( ! glinf_entities_is_post_request() ) {
 		wp_die(
 			esc_html__( 'This action requires a POST request.', 'gl-infinite-theme' ),
 			'',
@@ -125,9 +132,10 @@ function glinf_entities_redirect( array $args = array() ): never {
  *
  * Being the only source of accepted codes, this is also the whitelist.
  *
+ * @param int $count Number of items the "deleted" message refers to (an integer read by glinf_entities_read_count_arg(), never text).
  * @return array<string, array{type: string, text: string}>
  */
-function glinf_entities_get_messages(): array {
+function glinf_entities_get_messages( int $count = 1 ): array {
 	$messages = array(
 		'saved'             => array(
 			'type' => 'success',
@@ -135,7 +143,20 @@ function glinf_entities_get_messages(): array {
 		),
 		'deleted'           => array(
 			'type' => 'success',
-			'text' => __( 'Entity configuration deleted. Its content was not deleted. Its taxonomies stay, detached from it.', 'gl-infinite-theme' ),
+			'text' => sprintf(
+				/* translators: %d: number of deleted entity configurations. */
+				_n(
+					'%d entity configuration deleted. Its content was not deleted. Its taxonomies stay, detached from it.',
+					'%d entity configurations deleted. Their content was not deleted. Their taxonomies stay, detached from them.',
+					$count,
+					'gl-infinite-theme'
+				),
+				$count
+			),
+		),
+		'nothing_selected'  => array(
+			'type' => 'error',
+			'text' => __( 'No entity was selected, or the selected ones no longer exist. Nothing was deleted.', 'gl-infinite-theme' ),
 		),
 		'slug_invalid'      => array(
 			'type' => 'error',
@@ -467,7 +488,7 @@ function glinf_entities_count_items( string $slug ): int {
 }
 
 /**
- * Renders the Entity Manager screen (list or form).
+ * Renders the Entity Manager screen (list, form or delete confirmation).
  *
  * @return void
  */
@@ -480,9 +501,16 @@ function glinf_render_entities_page(): void {
 	$notice_code = isset( $_GET['glinf_notice'] ) ? sanitize_key( wp_unslash( $_GET['glinf_notice'] ) ) : '';
 	// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
-	$messages = glinf_entities_get_messages();
+	$messages = glinf_entities_get_messages( glinf_entities_read_count_arg() );
 	if ( ! isset( $messages[ $notice_code ] ) ) {
 		$notice_code = '';
+	}
+
+	// The group action of the list, already validated by glinf_entities_process_bulk_request() (the `load-` hook).
+	$pending = glinf_entities_pending_selection( 'entities' );
+	if ( null !== $pending ) {
+		glinf_render_entities_delete_confirmation( $pending );
+		return;
 	}
 
 	// Only a redirect after a failed save may refill the form: a plain visit must never show stale data.
@@ -508,6 +536,18 @@ function glinf_render_entities_page(): void {
 		$notice_code = 'not_found';
 	}
 
+	if ( 'confirm-delete' === $action ) {
+		// Reaching the confirmation from a row link is a plain GET: it changes nothing, the deletion needs the POST below.
+		$selected = glinf_list_sanitize_selection( array( $entity_slug ), array_map( 'strval', array_keys( glinf_get_entities() ) ), GLINF_ENTITIES_MAX );
+
+		if ( array() !== $selected ) {
+			glinf_render_entities_delete_confirmation( $selected );
+			return;
+		}
+
+		$notice_code = 'not_found';
+	}
+
 	glinf_render_entities_list( $notice_code );
 }
 
@@ -518,111 +558,118 @@ function glinf_render_entities_page(): void {
  * @return void
  */
 function glinf_render_entities_list( string $notice_code ): void {
-	$config         = glinf_get_config();
-	$entities       = $config['items'];
-	$can_add        = count( $entities ) < GLINF_ENTITIES_MAX;
-	$new_url        = glinf_entities_admin_url( array( 'action' => 'new' ) );
-	$taxonomies_url = glinf_taxonomies_admin_url();
-	$post_url       = admin_url( 'admin-post.php' );
-	$yes_label      = __( 'Yes', 'gl-infinite-theme' );
-	$no_label       = __( 'No', 'gl-infinite-theme' );
+	$entities = glinf_get_entities();
+	$can_add  = count( $entities ) < GLINF_ENTITIES_MAX;
+	$new_link = array(
+		'label' => __( 'Add New Entity', 'gl-infinite-theme' ),
+		'url'   => glinf_entities_admin_url( array( 'action' => 'new' ) ),
+	);
 
-	$messages      = glinf_entities_get_messages();
-	$limit_message = $messages['limit_reached']['text'];
+	$messages = glinf_entities_get_messages( glinf_entities_read_count_arg() );
+
+	glinf_entities_render_page_start( 'entities', __( 'Entities', 'gl-infinite-theme' ), $can_add ? $new_link : null );
+
+	glinf_entities_render_notice( $notice_code, $messages );
 	?>
-	<div class="wrap">
-		<h1 class="wp-heading-inline"><?php esc_html_e( 'Entities', 'gl-infinite-theme' ); ?></h1>
-		<?php if ( $can_add ) : ?>
-			<a href="<?php echo esc_url( $new_url ); ?>" class="page-title-action"><?php esc_html_e( 'Add New Entity', 'gl-infinite-theme' ); ?></a>
-		<?php endif; ?>
-		<hr class="wp-header-end">
 
-		<?php glinf_entities_render_notice( $notice_code, $messages ); ?>
-
-		<p>
+		<p class="glinf-em-intro">
 			<?php esc_html_e( 'Entities are custom content types. Each one gets its own menu, archive and single templates and a card pattern, generated automatically. Taxonomies (categories, tags and the like) are created separately and attached to one or more entities.', 'gl-infinite-theme' ); ?>
-			<a href="<?php echo esc_url( $taxonomies_url ); ?>"><?php esc_html_e( 'Manage taxonomies', 'gl-infinite-theme' ); ?></a>
 		</p>
 
 		<?php if ( ! $can_add ) : ?>
-			<p><?php echo esc_html( $limit_message ); ?></p>
+			<p class="glinf-em-limit"><?php echo esc_html( $messages['limit_reached']['text'] ); ?></p>
 		<?php endif; ?>
 
 		<?php if ( array() === $entities ) : ?>
-			<p><?php esc_html_e( 'No entities yet. Add your first one to get started.', 'gl-infinite-theme' ); ?></p>
+			<?php
+			glinf_entities_render_empty_state(
+				'dashicons-database',
+				__( 'No entities yet', 'gl-infinite-theme' ),
+				__( 'Add your first entity to get started: it gets a menu entry, an archive and a card, ready to use.', 'gl-infinite-theme' ),
+				$new_link
+			);
+			?>
 		<?php else : ?>
-			<table class="wp-list-table widefat fixed striped">
-				<thead>
-					<tr>
-						<th scope="col"><?php esc_html_e( 'Name', 'gl-infinite-theme' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Slug', 'gl-infinite-theme' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Archive', 'gl-infinite-theme' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Taxonomies', 'gl-infinite-theme' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Content', 'gl-infinite-theme' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Actions', 'gl-infinite-theme' ); ?></th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php foreach ( $entities as $entity ) : ?>
-						<?php
-						$slug        = $entity['slug'];
-						$post_type   = glinf_entity_post_type( $slug );
-						$edit_url    = glinf_entities_admin_url(
-							array(
-								'action' => 'edit',
-								'entity' => $slug,
-							)
-						);
-						$content_url = add_query_arg( 'post_type', $post_type, admin_url( 'edit.php' ) );
-							// False when the post type is not registered or has no archive.
-							$archive_url = $entity['has_archive'] ? get_post_type_archive_link( $post_type ) : false;
-						$confirm     = sprintf(
-							/* translators: %s: plural name of the entity. */
-							__( 'Delete the "%s" entity? Only its configuration is removed: the content is NOT deleted and will reappear if you create an entity with the same slug again. Taxonomies stay, and are detached from it.', 'gl-infinite-theme' ),
-							$entity['plural']
-						);
-
-						$taxonomy_names = implode( ', ', wp_list_pluck( glinf_get_entity_taxonomies( $slug, $config['taxonomies'] ), 'plural' ) );
-						?>
-						<tr>
-							<th scope="row">
-								<span class="dashicons <?php echo esc_attr( $entity['icon'] ); ?>" aria-hidden="true"></span>
-								<strong><?php echo esc_html( $entity['plural'] ); ?></strong>
-								(<?php echo esc_html( $entity['singular'] ); ?>)
-							</th>
-							<td><code><?php echo esc_html( $post_type ); ?></code></td>
-							<td>
-								<?php if ( $archive_url ) : ?>
-									<a href="<?php echo esc_url( $archive_url ); ?>">
-										<?php esc_html_e( 'View archive', 'gl-infinite-theme' ); ?>
-										<span class="screen-reader-text"><?php echo esc_html( $entity['plural'] ); ?></span>
-									</a>
-								<?php else : ?>
-									<?php echo esc_html( $entity['has_archive'] ? $yes_label : $no_label ); ?>
-								<?php endif; ?>
-							</td>
-							<td><?php echo '' === $taxonomy_names ? '&mdash;' : esc_html( $taxonomy_names ); ?></td>
-							<td><a href="<?php echo esc_url( $content_url ); ?>"><?php echo esc_html( (string) glinf_entities_count_items( $slug ) ); ?></a></td>
-							<td>
-								<a href="<?php echo esc_url( $edit_url ); ?>">
-									<?php esc_html_e( 'Edit', 'gl-infinite-theme' ); ?>
-									<span class="screen-reader-text"><?php echo esc_html( $entity['plural'] ); ?></span>
-								</a>
-								<form method="post" action="<?php echo esc_url( $post_url ); ?>" onsubmit="<?php echo esc_attr( 'return confirm( ' . wp_json_encode( $confirm ) . ' );' ); ?>">
-									<input type="hidden" name="action" value="glinf_delete_entity">
-									<input type="hidden" name="entity" value="<?php echo esc_attr( $slug ); ?>">
-									<input type="hidden" name="glinf_entity_nonce" value="<?php echo esc_attr( wp_create_nonce( 'glinf_delete_entity_' . $slug ) ); ?>">
-									<button type="submit" class="button-link button-link-delete">
-										<?php esc_html_e( 'Delete', 'gl-infinite-theme' ); ?>
-										<span class="screen-reader-text"><?php echo esc_html( $entity['plural'] ); ?></span>
-									</button>
-								</form>
-							</td>
-						</tr>
-					<?php endforeach; ?>
-				</tbody>
-			</table>
+			<?php
+			$table = glinf_entities_get_list_table( 'entities' );
+			$table->prepare_items();
+			$table->render();
+			?>
 		<?php endif; ?>
+	</div>
+	<?php
+}
+
+/**
+ * Renders the confirmation screen of the deletion of one or more entities.
+ *
+ * The slugs are already validated (they exist in the configuration). Showing
+ * this screen changes nothing: the button posts them to glinf_handle_bulk_delete_entities().
+ *
+ * @param string[] $slugs Slugs of the entities to delete (at least one).
+ * @return void
+ */
+function glinf_render_entities_delete_confirmation( array $slugs ): void {
+	$config = glinf_get_config();
+	$items  = array();
+
+	foreach ( $slugs as $slug ) {
+		$entity = $config['items'][ $slug ];
+		$count  = glinf_entities_count_items( $slug );
+		$detail = sprintf(
+			/* translators: %s: number of content items of the entity. */
+			_n( '%s content item.', '%s content items.', $count, 'gl-infinite-theme' ),
+			number_format_i18n( $count )
+		);
+
+		$taxonomy_names = wp_list_pluck( glinf_get_entity_taxonomies( $slug, $config['taxonomies'] ), 'plural' );
+		if ( array() !== $taxonomy_names ) {
+			$detail .= ' ' . sprintf(
+				/* translators: %s: comma separated names of the taxonomies. */
+				__( 'Taxonomies detached from it: %s.', 'gl-infinite-theme' ),
+				implode( ', ', $taxonomy_names )
+			);
+		}
+
+		$items[] = array(
+			'name'   => $entity['plural'],
+			'code'   => glinf_entity_post_type( $slug ),
+			'detail' => $detail,
+		);
+	}
+
+	$count = count( $slugs );
+
+	glinf_entities_render_page_start(
+		'entities',
+		_n( 'Delete entity', 'Delete entities', $count, 'gl-infinite-theme' )
+	);
+
+	glinf_entities_render_confirm_form(
+		array(
+			'heading'      => _n( 'Delete this entity?', 'Delete these entities?', $count, 'gl-infinite-theme' ),
+			'intro'        => sprintf(
+				/* translators: %d: number of entities to delete. */
+				_n( 'You are about to delete the configuration of %d entity:', 'You are about to delete the configuration of %d entities:', $count, 'gl-infinite-theme' ),
+				$count
+			),
+			'items'        => $items,
+			'consequences' => array(
+				__( 'Only the configuration is removed: the content is NOT deleted and stays in the database.', 'gl-infinite-theme' ),
+				__( 'If you create an entity with the same slug again, its content reappears.', 'gl-infinite-theme' ),
+				1 === $count
+					? __( 'The taxonomies attached to this entity stay, and are detached from it. Their terms are kept.', 'gl-infinite-theme' )
+					: __( 'The taxonomies attached to these entities stay, and are detached from them. Their terms are kept.', 'gl-infinite-theme' ),
+				__( 'The addresses of the archive and of the items stop working. No redirect is created.', 'gl-infinite-theme' ),
+			),
+			'action'       => 'glinf_bulk_delete_entities',
+			'nonce_action' => 'glinf_bulk_delete_entities',
+			'nonce_name'   => 'glinf_entity_nonce',
+			'slugs'        => $slugs,
+			'cancel_url'   => glinf_entities_admin_url(),
+		)
+	);
+	?>
 	</div>
 	<?php
 }
@@ -630,8 +677,10 @@ function glinf_render_entities_list( string $notice_code ): void {
 /**
  * Renders the add/edit form.
  *
- * The taxonomies are shown read-only: the association is stored (and edited)
- * on the taxonomy side, so the form has nothing to submit for them.
+ * The fields are grouped in cards (identity, appearance, content) so the form
+ * reads as a few short steps. The taxonomies are shown read-only: the association
+ * is stored (and edited) on the taxonomy side, so the form has nothing to submit
+ * for them.
  *
  * @param array<string, mixed> $entity      Entity to show (sanitized).
  * @param bool                 $is_edit     True when editing an existing entity (slug is read-only).
@@ -649,101 +698,118 @@ function glinf_render_entity_form( array $entity, bool $is_edit, string $notice_
 
 	// A new entity has no taxonomies yet; the slug typed in an unsaved form must not be looked up.
 	$taxonomy_names = $is_edit ? implode( ', ', wp_list_pluck( glinf_get_entity_taxonomies( $entity['slug'], glinf_get_taxonomies() ), 'plural' ) ) : '';
+
+	glinf_entities_render_page_start( 'entities', $title );
+
+	glinf_entities_render_notice( $notice_code, glinf_entities_get_messages() );
 	?>
-	<div class="wrap">
-		<h1><?php echo esc_html( $title ); ?></h1>
-		<hr class="wp-header-end">
 
-		<?php glinf_entities_render_notice( $notice_code, glinf_entities_get_messages() ); ?>
-
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="glinf-em-form">
 			<input type="hidden" name="action" value="glinf_save_entity">
 			<?php wp_nonce_field( 'glinf_save_entity', 'glinf_entity_nonce' ); ?>
 			<?php if ( $is_edit ) : ?>
 				<input type="hidden" name="glinf_original_slug" value="<?php echo esc_attr( $entity['slug'] ); ?>">
 			<?php endif; ?>
 
-			<table class="form-table" role="presentation">
-				<tr>
-					<th scope="row"><label for="glinf-entity-slug"><?php esc_html_e( 'Slug', 'gl-infinite-theme' ); ?></label></th>
-					<td>
-						<input type="text" id="glinf-entity-slug" name="glinf_entity[slug]" value="<?php echo esc_attr( $entity['slug'] ); ?>" class="regular-text code" maxlength="14" pattern="[a-z][a-z0-9_]{1,12}[a-z0-9]" autocapitalize="none" autocomplete="off" spellcheck="false" aria-describedby="glinf-entity-slug-desc" required <?php wp_readonly( $is_edit ); ?>>
-						<p class="description" id="glinf-entity-slug-desc">
-							<?php
-							if ( $is_edit ) {
-								esc_html_e( 'The slug cannot be changed after creation.', 'gl-infinite-theme' );
-							} else {
-								esc_html_e( '3 to 14 characters: lowercase letters, numbers and underscores, starting with a letter. It cannot be changed later. By default it is also used in the address of the archive (underscores become hyphens): see URL base.', 'gl-infinite-theme' );
-							}
-							?>
-						</p>
-					</td>
-				</tr>
-				<?php glinf_entities_render_url_base_row( 'entity', $entity, $is_edit ); ?>
-				<tr>
-					<th scope="row"><label for="glinf-entity-singular"><?php esc_html_e( 'Singular name', 'gl-infinite-theme' ); ?></label></th>
-					<td>
-						<input type="text" id="glinf-entity-singular" name="glinf_entity[singular]" value="<?php echo esc_attr( $entity['singular'] ); ?>" class="regular-text" maxlength="40" aria-describedby="glinf-entity-singular-desc" required>
-						<p class="description" id="glinf-entity-singular-desc"><?php esc_html_e( 'Example: Event. Up to 40 characters.', 'gl-infinite-theme' ); ?></p>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><label for="glinf-entity-plural"><?php esc_html_e( 'Plural name', 'gl-infinite-theme' ); ?></label></th>
-					<td>
-						<input type="text" id="glinf-entity-plural" name="glinf_entity[plural]" value="<?php echo esc_attr( $entity['plural'] ); ?>" class="regular-text" maxlength="40" aria-describedby="glinf-entity-plural-desc" required>
-						<p class="description" id="glinf-entity-plural-desc"><?php esc_html_e( 'Example: Events. Up to 40 characters.', 'gl-infinite-theme' ); ?></p>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><label for="glinf-entity-icon"><?php esc_html_e( 'Menu icon', 'gl-infinite-theme' ); ?></label></th>
-					<td>
-						<select id="glinf-entity-icon" name="glinf_entity[icon]">
-							<?php foreach ( $icons as $icon ) : ?>
-								<option value="<?php echo esc_attr( $icon ); ?>" <?php selected( $entity['icon'], $icon ); ?>><?php echo esc_html( $icon_labels[ $icon ] ?? $icon ); ?></option>
-							<?php endforeach; ?>
-						</select>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><?php esc_html_e( 'Features', 'gl-infinite-theme' ); ?></th>
-					<td>
-						<fieldset>
-							<legend class="screen-reader-text"><span><?php esc_html_e( 'Features', 'gl-infinite-theme' ); ?></span></legend>
-							<?php foreach ( glinf_get_entity_supports_whitelist() as $feature ) : ?>
-								<label for="<?php echo esc_attr( 'glinf-entity-supports-' . $feature ); ?>">
-									<input type="checkbox" id="<?php echo esc_attr( 'glinf-entity-supports-' . $feature ); ?>" name="glinf_entity[supports][]" value="<?php echo esc_attr( $feature ); ?>" <?php checked( in_array( $feature, $entity['supports'], true ) ); ?>>
-									<?php echo esc_html( $supports_label[ $feature ] ?? $feature ); ?>
+			<section class="glinf-em-card">
+				<h2><?php esc_html_e( 'Identity', 'gl-infinite-theme' ); ?></h2>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><label for="glinf-entity-slug"><?php esc_html_e( 'Slug', 'gl-infinite-theme' ); ?></label></th>
+						<td>
+							<input type="text" id="glinf-entity-slug" name="glinf_entity[slug]" value="<?php echo esc_attr( $entity['slug'] ); ?>" class="regular-text code" maxlength="14" pattern="[a-z][a-z0-9_]{1,12}[a-z0-9]" autocapitalize="none" autocomplete="off" spellcheck="false" aria-describedby="glinf-entity-slug-desc" required <?php wp_readonly( $is_edit ); ?>>
+							<p class="description" id="glinf-entity-slug-desc">
+								<?php
+								if ( $is_edit ) {
+									esc_html_e( 'The slug cannot be changed after creation.', 'gl-infinite-theme' );
+								} else {
+									esc_html_e( '3 to 14 characters: lowercase letters, numbers and underscores, starting with a letter. It cannot be changed later. By default it is also used in the address of the archive (underscores become hyphens): see URL base.', 'gl-infinite-theme' );
+								}
+								?>
+							</p>
+						</td>
+					</tr>
+					<?php glinf_entities_render_url_base_row( 'entity', $entity, $is_edit ); ?>
+					<tr>
+						<th scope="row"><label for="glinf-entity-singular"><?php esc_html_e( 'Singular name', 'gl-infinite-theme' ); ?></label></th>
+						<td>
+							<input type="text" id="glinf-entity-singular" name="glinf_entity[singular]" value="<?php echo esc_attr( $entity['singular'] ); ?>" class="regular-text" maxlength="40" aria-describedby="glinf-entity-singular-desc" required>
+							<p class="description" id="glinf-entity-singular-desc"><?php esc_html_e( 'Example: Event. Up to 40 characters.', 'gl-infinite-theme' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="glinf-entity-plural"><?php esc_html_e( 'Plural name', 'gl-infinite-theme' ); ?></label></th>
+						<td>
+							<input type="text" id="glinf-entity-plural" name="glinf_entity[plural]" value="<?php echo esc_attr( $entity['plural'] ); ?>" class="regular-text" maxlength="40" aria-describedby="glinf-entity-plural-desc" required>
+							<p class="description" id="glinf-entity-plural-desc"><?php esc_html_e( 'Example: Events. Up to 40 characters.', 'gl-infinite-theme' ); ?></p>
+						</td>
+					</tr>
+				</table>
+			</section>
+
+			<section class="glinf-em-card">
+				<h2><?php esc_html_e( 'Appearance', 'gl-infinite-theme' ); ?></h2>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><label for="glinf-entity-icon"><?php esc_html_e( 'Menu icon', 'gl-infinite-theme' ); ?></label></th>
+						<td>
+							<select id="glinf-entity-icon" name="glinf_entity[icon]">
+								<?php foreach ( $icons as $icon ) : ?>
+									<option value="<?php echo esc_attr( $icon ); ?>" <?php selected( $entity['icon'], $icon ); ?>><?php echo esc_html( $icon_labels[ $icon ] ?? $icon ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</td>
+					</tr>
+				</table>
+			</section>
+
+			<section class="glinf-em-card">
+				<h2><?php esc_html_e( 'Content', 'gl-infinite-theme' ); ?></h2>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Features', 'gl-infinite-theme' ); ?></th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text"><span><?php esc_html_e( 'Features', 'gl-infinite-theme' ); ?></span></legend>
+								<?php foreach ( glinf_get_entity_supports_whitelist() as $feature ) : ?>
+									<label for="<?php echo esc_attr( 'glinf-entity-supports-' . $feature ); ?>">
+										<input type="checkbox" id="<?php echo esc_attr( 'glinf-entity-supports-' . $feature ); ?>" name="glinf_entity[supports][]" value="<?php echo esc_attr( $feature ); ?>" <?php checked( in_array( $feature, $entity['supports'], true ) ); ?>>
+										<?php echo esc_html( $supports_label[ $feature ] ?? $feature ); ?>
+									</label>
+									<br>
+								<?php endforeach; ?>
+							</fieldset>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Archive', 'gl-infinite-theme' ); ?></th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text"><span><?php esc_html_e( 'Archive', 'gl-infinite-theme' ); ?></span></legend>
+								<label for="glinf-entity-has-archive">
+									<input type="checkbox" id="glinf-entity-has-archive" name="glinf_entity[has_archive]" value="1" <?php checked( $entity['has_archive'] ); ?>>
+									<?php esc_html_e( 'Enable an archive page that lists all items', 'gl-infinite-theme' ); ?>
 								</label>
-								<br>
-							<?php endforeach; ?>
-						</fieldset>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><?php esc_html_e( 'Archive', 'gl-infinite-theme' ); ?></th>
-					<td>
-						<fieldset>
-							<legend class="screen-reader-text"><span><?php esc_html_e( 'Archive', 'gl-infinite-theme' ); ?></span></legend>
-							<label for="glinf-entity-has-archive">
-								<input type="checkbox" id="glinf-entity-has-archive" name="glinf_entity[has_archive]" value="1" <?php checked( $entity['has_archive'] ); ?>>
-								<?php esc_html_e( 'Enable an archive page that lists all items', 'gl-infinite-theme' ); ?>
-							</label>
-						</fieldset>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><?php esc_html_e( 'Taxonomies', 'gl-infinite-theme' ); ?></th>
-					<td>
-						<?php if ( '' === $taxonomy_names ) : ?>
-							<?php esc_html_e( 'None yet', 'gl-infinite-theme' ); ?>
-						<?php else : ?>
-							<?php echo esc_html( $taxonomy_names ); ?>
-						<?php endif; ?>
-						&mdash;
-						<a href="<?php echo esc_url( $taxonomies_url ); ?>"><?php esc_html_e( 'Manage taxonomies', 'gl-infinite-theme' ); ?></a>
-					</td>
-				</tr>
-			</table>
+							</fieldset>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Taxonomies', 'gl-infinite-theme' ); ?></th>
+						<td>
+							<p>
+								<?php if ( '' === $taxonomy_names ) : ?>
+									<?php esc_html_e( 'None yet', 'gl-infinite-theme' ); ?>
+								<?php else : ?>
+									<?php echo esc_html( $taxonomy_names ); ?>
+								<?php endif; ?>
+							</p>
+							<p class="description">
+								<a href="<?php echo esc_url( $taxonomies_url ); ?>"><?php esc_html_e( 'Manage taxonomies', 'gl-infinite-theme' ); ?></a>
+							</p>
+						</td>
+					</tr>
+				</table>
+			</section>
 
 			<p class="submit">
 				<button type="submit" class="button button-primary"><?php echo esc_html( $submit_label ); ?></button>
@@ -820,37 +886,45 @@ function glinf_handle_save_entity(): void {
 add_action( 'admin_post_glinf_save_entity', 'glinf_handle_save_entity' );
 
 /**
- * Handles the "delete entity" form.
+ * Handles the confirmed deletion of one or more entities.
+ *
+ * Reached only from the confirmation screen (a row link or the group action of
+ * the list both lead there). Order: capability, method, nonce, then sanitizing and
+ * validating the slugs (see glinf_list_bulk_delete_config()), then one atomic save.
+ * Whatever is not a string, is duplicated or is not in the configuration is
+ * discarded; at least one valid entity is required.
  *
  * Removes ONLY the configuration. Posts and terms stay in the database and
- * reappear if an entity with the same slug is created again. The entity is also
- * detached from every taxonomy, in the SAME save: the taxonomies stay (so do
- * their terms) but stop pointing at an entity that does not exist any more.
+ * reappear if an entity with the same slug is created again. Every deleted entity
+ * is also detached from every taxonomy, in the SAME save: the taxonomies stay (so
+ * do their terms) but stop pointing at an entity that does not exist any more.
+ * The redirect carries a whitelisted code and the number of entities, as an integer.
  *
  * @return void
  */
-function glinf_handle_delete_entity(): void {
+function glinf_handle_bulk_delete_entities(): void {
 	glinf_entities_require_cap();
 	glinf_entities_require_post();
+	check_admin_referer( 'glinf_bulk_delete_entities', 'glinf_entity_nonce' );
 
-	// The slug is needed to build the nonce action; it is sanitized here and nothing is changed before the nonce is verified.
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified on the next line, the nonce action depends on this value.
-	$slug = isset( $_POST['entity'] ) ? sanitize_key( wp_unslash( $_POST['entity'] ) ) : '';
-	check_admin_referer( 'glinf_delete_entity_' . $slug, 'glinf_entity_nonce' );
+	// A list of slugs: sanitized element by element against the existing ones in glinf_list_bulk_delete_config().
+	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Unslashed here, sanitized by glinf_list_sanitize_selection().
+	$received = isset( $_POST['glinf_slugs'] ) ? wp_unslash( $_POST['glinf_slugs'] ) : array();
+	$result   = glinf_list_bulk_delete_config( glinf_get_config( true ), 'entities', $received );
 
-	$config = glinf_get_config( true );
-	$items  = $config['items'];
-
-	if ( ! isset( $items[ $slug ] ) ) {
-		glinf_entities_redirect( array( 'glinf_notice' => 'not_found' ) );
+	if ( 0 === $result['removed'] ) {
+		glinf_entities_redirect( array( 'glinf_notice' => 'nothing_selected' ) );
 	}
 
-	unset( $items[ $slug ] );
-
-	if ( ! glinf_save_config( $items, glinf_detach_entity_from_taxonomies( $config['taxonomies'], $slug ) ) ) {
+	if ( ! glinf_save_config( $result['items'], $result['taxonomies'] ) ) {
 		glinf_entities_redirect( array( 'glinf_notice' => 'save_failed' ) );
 	}
 
-	glinf_entities_redirect( array( 'glinf_notice' => 'deleted' ) );
+	glinf_entities_redirect(
+		array(
+			'glinf_notice' => 'deleted',
+			'glinf_count'  => (string) $result['removed'],
+		)
+	);
 }
-add_action( 'admin_post_glinf_delete_entity', 'glinf_handle_delete_entity' );
+add_action( 'admin_post_glinf_bulk_delete_entities', 'glinf_handle_bulk_delete_entities' );

@@ -1,0 +1,460 @@
+/**
+ * Entity Manager (wp-admin): the "Entities" and "Taxonomies" screens.
+ *
+ * Loaded ONLY on those two screens (see glinf_entities_enqueue_admin_assets()).
+ * Rules:
+ * - the accent colour is always the admin colour scheme variable
+ *   (--wp-admin-theme-color and its darker steps), so it follows the scheme the
+ *   user picked; neutral greys are the ones core uses in every scheme;
+ * - a state is never conveyed by colour alone: badges always carry text, and the
+ *   "off" ones also have a dashed border;
+ * - logical properties (inline/block) instead of left/right, so right-to-left
+ *   languages work with no second file;
+ * - no JavaScript, no external font: transitions are limited to hover states and
+ *   switched off for prefers-reduced-motion.
+ */
+
+.glinf-em {
+	--glinf-em-text: #1d2327;
+	--glinf-em-muted: #50575e;
+	--glinf-em-border: #c3c4c7;
+	--glinf-em-surface: #fff;
+	--glinf-em-surface-alt: #f6f7f7;
+	--glinf-em-accent: var(--wp-admin-theme-color, #3858e9);
+	--glinf-em-accent-strong: var(--wp-admin-theme-color-darker-20, #183ad6);
+	--glinf-em-tint: #f0f0f1;
+	--glinf-em-danger: #b32d2e;
+	--glinf-em-danger-strong: #8a2424;
+	--glinf-em-radius: 8px;
+}
+
+@supports (color: color-mix(in srgb, red 10%, white)) {
+	.glinf-em {
+		--glinf-em-tint: color-mix(in srgb, var(--wp-admin-theme-color, #3858e9) 12%, #fff);
+	}
+}
+
+/* Header: title and "Add New" on one line, then the tabs. */
+.glinf-em .wp-heading-inline {
+	margin-inline-end: 12px;
+}
+
+.glinf-em .page-title-action {
+	top: 0;
+	margin-inline-start: 0;
+	vertical-align: middle;
+}
+
+.glinf-em-tabs {
+	margin-block: 12px 20px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0 4px;
+}
+
+.glinf-em-tabs .nav-tab {
+	margin-inline-start: 0;
+	padding: 8px 18px;
+	font-size: 14px;
+	border-radius: 6px 6px 0 0;
+}
+
+/* The active tab is bold and underlined as well as tinted: not colour alone. */
+.glinf-em-tabs .nav-tab-active,
+.glinf-em-tabs .nav-tab-active:hover,
+.glinf-em-tabs .nav-tab-active:focus {
+	font-weight: 600;
+	color: var(--glinf-em-text);
+	box-shadow: inset 0 -3px 0 var(--glinf-em-accent);
+}
+
+.glinf-em-tabs .nav-tab:focus {
+	box-shadow: 0 0 0 var(--wp-admin-border-width-focus, 1.5px) var(--glinf-em-accent);
+	outline: 2px solid transparent;
+}
+
+.glinf-em-tabs .nav-tab-active:focus {
+	box-shadow: inset 0 -3px 0 var(--glinf-em-accent), 0 0 0 var(--wp-admin-border-width-focus, 1.5px) var(--glinf-em-accent);
+}
+
+.glinf-em-intro {
+	max-width: 62em;
+	margin-block: 0 16px;
+	color: var(--glinf-em-muted);
+	font-size: 14px;
+}
+
+.glinf-em-limit {
+	font-weight: 600;
+}
+
+/* Cards: empty states, confirmation, form sections. */
+.glinf-em-card {
+	box-sizing: border-box;
+	max-width: 820px;
+	margin: 0 0 20px;
+	padding: 20px 24px;
+	border: 1px solid var(--glinf-em-border);
+	border-radius: var(--glinf-em-radius);
+	background: var(--glinf-em-surface);
+}
+
+.glinf-em-card > h2 {
+	margin: 0 0 8px;
+	padding: 0;
+	font-size: 16px;
+	line-height: 1.4;
+}
+
+.glinf-em-card .form-table {
+	margin: 0;
+}
+
+.glinf-em-card .form-table th {
+	width: 190px;
+	padding-inline: 0 16px;
+}
+
+.glinf-em-card .form-table td {
+	padding-inline: 0;
+}
+
+.glinf-em-form .regular-text {
+	width: 100%;
+	max-width: 25em;
+}
+
+.glinf-em-form .submit {
+	max-width: 820px;
+	margin-block: 0;
+	padding-block: 4px 0;
+}
+
+.glinf-em-empty {
+	max-width: none;
+	padding: 48px 24px;
+	text-align: center;
+}
+
+.glinf-em-empty > .dashicons,
+.glinf-em-name > .dashicons {
+	flex: none;
+	box-sizing: border-box;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background: var(--glinf-em-tint);
+	color: var(--glinf-em-accent-strong);
+	font-size: 18px;
+	line-height: 32px;
+	text-align: center;
+}
+
+.glinf-em-empty > .dashicons {
+	width: 56px;
+	height: 56px;
+	font-size: 28px;
+	line-height: 56px;
+}
+
+.glinf-em-empty > h2 {
+	margin-block: 12px 4px;
+	font-size: 18px;
+}
+
+.glinf-em-empty p {
+	margin-block: 0 12px;
+	color: var(--glinf-em-muted);
+}
+
+/* Delete confirmation. */
+.glinf-em-confirm {
+	max-width: 720px;
+	border-inline-start: 4px solid var(--glinf-em-danger);
+}
+
+.glinf-em-confirm__items,
+.glinf-em-confirm__effects {
+	margin-block: 0 16px;
+	margin-inline: 1.4em 0;
+	padding: 0;
+	list-style: disc;
+}
+
+.glinf-em-confirm__items li,
+.glinf-em-confirm__effects li {
+	margin-block-end: 6px;
+}
+
+.glinf-em-confirm__detail {
+	display: block;
+	color: var(--glinf-em-muted);
+}
+
+.glinf-em .button.glinf-em-danger {
+	border-color: var(--glinf-em-danger);
+	background: var(--glinf-em-danger);
+	color: #fff;
+}
+
+.glinf-em .button.glinf-em-danger:hover {
+	border-color: var(--glinf-em-danger-strong);
+	background: var(--glinf-em-danger-strong);
+	color: #fff;
+}
+
+.glinf-em .button.glinf-em-danger:focus {
+	border-color: var(--glinf-em-danger-strong);
+	background: var(--glinf-em-danger-strong);
+	color: #fff;
+	box-shadow: 0 0 0 1px #fff, 0 0 0 3px var(--glinf-em-danger);
+	outline: 2px solid transparent;
+}
+
+/* Views, search and filters. */
+.glinf-em-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 16px;
+	margin-block: 4px 8px;
+}
+
+.glinf-em-toolbar .subsubsub {
+	float: none;
+	margin: 0;
+	white-space: normal;
+}
+
+.glinf-em-search {
+	margin: 0;
+}
+
+.glinf-em-search .search-box {
+	display: flex;
+	float: none;
+	align-items: center;
+	gap: 6px;
+	width: auto;
+	margin: 0;
+}
+
+.glinf-em-search .search-box input[type="search"] {
+	float: none;
+	flex: 1 1 8em;
+	width: auto;
+	min-width: 0;
+	margin: 0;
+}
+
+.glinf-em-search .search-box .button {
+	margin: 0;
+}
+
+/* Core hides every top action below 783px; the filter must stay usable there (the group action is repeated below the table). */
+.glinf-em .tablenav.top .glinf-em-filter {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+}
+
+/* The table. */
+.glinf-em-table {
+	border-collapse: separate;
+	border-radius: var(--glinf-em-radius);
+	overflow: hidden;
+}
+
+.glinf-em-table thead th,
+.glinf-em-table thead td,
+.glinf-em-table tfoot th,
+.glinf-em-table tfoot td {
+	padding-block: 12px;
+	color: var(--glinf-em-text);
+	font-weight: 600;
+}
+
+.glinf-em-table tbody th,
+.glinf-em-table tbody td {
+	padding-block: 14px;
+	vertical-align: middle;
+}
+
+.glinf-em-table tbody th.check-column,
+.glinf-em-table tbody td.check-column {
+	padding-block: 0;
+	vertical-align: middle;
+}
+
+.glinf-em-table .check-column input[type="checkbox"] {
+	margin-block: 0;
+}
+
+.glinf-em-table .column-cb {
+	width: 2.2em;
+}
+
+.glinf-em-table .column-primary {
+	width: 26%;
+}
+
+.glinf-em-table .column-archive,
+.glinf-em-table .column-hierarchical {
+	width: 8em;
+}
+
+.glinf-em-table .column-content,
+.glinf-em-table .column-terms {
+	width: 6em;
+}
+
+.glinf-em-table code {
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-size: 12px;
+	overflow-wrap: anywhere;
+}
+
+.glinf-em-name {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+}
+
+.glinf-em-name__text {
+	min-width: 0;
+	padding-block-start: 4px;
+	overflow-wrap: anywhere;
+}
+
+.glinf-em-name__singular {
+	color: var(--glinf-em-muted);
+}
+
+/* Always visible, so they are reachable by keyboard and on touch screens. */
+.glinf-em-table .row-actions {
+	position: static;
+	left: auto;
+	margin-block-start: 2px;
+	color: var(--glinf-em-muted);
+}
+
+.glinf-em-table .row-actions .submitdelete {
+	color: var(--glinf-em-danger);
+}
+
+.glinf-em-table .row-actions .submitdelete:hover,
+.glinf-em-table .row-actions .submitdelete:focus {
+	color: var(--glinf-em-danger-strong);
+}
+
+.glinf-em-table .no-items td {
+	padding-block: 32px;
+	text-align: center;
+	color: var(--glinf-em-muted);
+}
+
+/* Pills: they always contain text; "off" states also use a dashed border. */
+.glinf-em-badge {
+	display: inline-block;
+	box-sizing: border-box;
+	padding: 1px 10px;
+	border: 1px solid var(--glinf-em-accent);
+	border-radius: 999px;
+	background: var(--glinf-em-tint);
+	color: var(--glinf-em-text);
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.7;
+	white-space: nowrap;
+}
+
+.glinf-em-badge--off,
+.glinf-em-badge--unattached {
+	border: 1px dashed var(--glinf-em-muted);
+	background: var(--glinf-em-surface-alt);
+	color: var(--glinf-em-muted);
+	font-weight: 500;
+}
+
+.glinf-em-badge--shared {
+	border-width: 2px;
+	padding-block: 0;
+}
+
+.glinf-em-scope-detail {
+	color: var(--glinf-em-muted);
+}
+
+@media (forced-colors: active) {
+	.glinf-em-badge {
+		border-color: CanvasText;
+	}
+
+	.glinf-em-tabs .nav-tab-active {
+		text-decoration: underline;
+	}
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.glinf-em .button.glinf-em-danger,
+	.glinf-em-tabs .nav-tab {
+		transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+	}
+}
+
+/* Narrow screens: the core list table collapses to the name column; keep the rest tidy. */
+@media screen and (max-width: 782px) {
+	.glinf-em-card {
+		padding: 16px;
+	}
+
+	.glinf-em-card .form-table th {
+		width: auto;
+		padding-block: 8px 0;
+	}
+
+	.glinf-em-toolbar {
+		align-items: stretch;
+	}
+
+	.glinf-em-search,
+	.glinf-em-search .search-box {
+		width: 100%;
+	}
+
+	.glinf-em-search .search-box input[type="search"] {
+		height: auto;
+		min-height: 40px;
+		margin: 0;
+	}
+
+	.glinf-em-table .column-primary,
+	.glinf-em-table .column-archive,
+	.glinf-em-table .column-hierarchical,
+	.glinf-em-table .column-content,
+	.glinf-em-table .column-terms {
+		width: auto;
+	}
+
+	.glinf-em-table tbody td,
+	.glinf-em-table tbody th {
+		padding-block: 8px;
+	}
+
+	/* The rows are flex containers here: line the checkbox up with the first line of the name. */
+	.glinf-em-table tbody th.check-column,
+	.glinf-em-table tbody td.check-column {
+		padding-block: 12px 0;
+	}
+
+	.glinf-em .tablenav.top {
+		margin-block-start: 8px;
+	}
+
+	.glinf-em-empty {
+		padding: 32px 16px;
+	}
+}
