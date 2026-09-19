@@ -474,6 +474,8 @@ function glinf_render_entities_list( string $notice_code ): void {
 							)
 						);
 						$content_url = add_query_arg( 'post_type', $post_type, admin_url( 'edit.php' ) );
+							// False when the post type is not registered or has no archive.
+							$archive_url = $entity['has_archive'] ? get_post_type_archive_link( $post_type ) : false;
 						$confirm     = sprintf(
 							/* translators: %s: plural name of the entity. */
 							__( 'Delete the "%s" entity? Only its configuration is removed: the content is NOT deleted and will reappear if you create an entity with the same slug again. Taxonomies stay, and are detached from it.', 'gl-infinite-theme' ),
@@ -489,7 +491,16 @@ function glinf_render_entities_list( string $notice_code ): void {
 								(<?php echo esc_html( $entity['singular'] ); ?>)
 							</th>
 							<td><code><?php echo esc_html( $post_type ); ?></code></td>
-							<td><?php echo esc_html( $entity['has_archive'] ? $yes_label : $no_label ); ?></td>
+							<td>
+								<?php if ( $archive_url ) : ?>
+									<a href="<?php echo esc_url( $archive_url ); ?>">
+										<?php esc_html_e( 'View archive', 'gl-infinite-theme' ); ?>
+										<span class="screen-reader-text"><?php echo esc_html( $entity['plural'] ); ?></span>
+									</a>
+								<?php else : ?>
+									<?php echo esc_html( $entity['has_archive'] ? $yes_label : $no_label ); ?>
+								<?php endif; ?>
+							</td>
 							<td><?php echo '' === $taxonomy_names ? '&mdash;' : esc_html( $taxonomy_names ); ?></td>
 							<td><a href="<?php echo esc_url( $content_url ); ?>"><?php echo esc_html( (string) glinf_entities_count_items( $slug ) ); ?></a></td>
 							<td>
