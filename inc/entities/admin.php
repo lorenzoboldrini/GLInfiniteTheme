@@ -465,24 +465,38 @@ function glinf_entities_render_notice( string $code, array $messages ): void {
 /**
  * Counts the items of an entity (every status but trash and auto-draft).
  *
- * wp_count_posts() is cached by core, so this does not query more than once per post type.
+ * Computed once per request and per entity: the list column, the delete
+ * confirmation and the dashboard all read the same value, so the database is
+ * asked at most once (wp_count_posts() also caches, but only in the object
+ * cache). Nothing is persisted: every request starts from a fresh count.
  *
  * @param string $slug Entity slug.
  * @return int
  */
 function glinf_entities_count_items( string $slug ): int {
+	static $memo = array();
+
+	if ( isset( $memo[ $slug ] ) ) {
+		return $memo[ $slug ];
+	}
+
 	$post_type = glinf_entity_post_type( $slug );
 
+	$total = 0;
+
 	if ( ! post_type_exists( $post_type ) ) {
-		return 0;
+		$memo[ $slug ] = $total;
+
+		return $total;
 	}
 
 	$counts = wp_count_posts( $post_type );
-	$total  = 0;
 
 	foreach ( array( 'publish', 'future', 'draft', 'pending', 'private' ) as $status ) {
 		$total += isset( $counts->$status ) ? (int) $counts->$status : 0;
 	}
+
+	$memo[ $slug ] = $total;
 
 	return $total;
 }
@@ -570,6 +584,9 @@ function glinf_render_entities_list( string $notice_code ): void {
 	glinf_entities_render_page_start( 'entities', __( 'Entities', 'gl-infinite-theme' ), $can_add ? $new_link : null );
 
 	glinf_entities_render_notice( $notice_code, $messages );
+
+	// Only the list shows it: the forms and the delete confirmation do not.
+	glinf_entities_render_dashboard( 'entities' );
 	?>
 
 		<p class="glinf-em-intro">

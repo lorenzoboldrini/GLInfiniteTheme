@@ -303,6 +303,40 @@ Le due schermate (**Entities** e **Taxonomies**) hanno lo stesso comportamento.
 - **Nessun risultato**: se ricerca o filtri nascondono tutto, la tabella lo dice e offre il link **Reset filters**. Se non hai ancora creato nulla, al posto della tabella vedi un riquadro con il pulsante per aggiungere il primo elemento.
 - **Opzioni schermata** (*Screen Options*, in alto a destra): scegli quante righe vedere per pagina (da 1 a 100, di partenza 20; la scelta è tua e vale per ogni elenco) e quali colonne mostrare. Con al massimo 20 entità e 20 tassonomie, di solito sta tutto in una pagina.
 
+### La dashboard
+
+In cima a **Entities** e a **Taxonomies**, sotto le schede, trovi un riepilogo. Compare solo negli elenchi (non nei moduli né nelle schermate di conferma) ed è **di sola lettura**: non cambia mai nulla, e ogni problema ha un collegamento per andare a risolverlo. I numeri sono sempre aggiornati.
+
+**Carte con i numeri.** Quando il numero ha un elenco filtrato corrispondente, la carta è un collegamento (l'etichetta è sottolineata) e ti ci porta.
+
+In **Entities**:
+
+- **Entities configured**: quante entità hai, su un massimo di 20.
+- **Content items in total**: i contenuti di tutte le entità insieme (bozze e privati compresi, cestino escluso).
+- **Entities with an archive**: quelle che hanno una pagina di elenco.
+- **Entities with taxonomies**: quelle a cui è collegata almeno una tassonomia.
+
+In **Taxonomies**:
+
+- **Taxonomies configured**: quante tassonomie hai, su un massimo di 20.
+- **Specific to one entity**, **Shared by several entities**, **Not attached to any entity**: come sono collegate.
+- **Terms in total**: i termini di tutte le tassonomie collegate (quelle non collegate non sono attive, quindi non si contano).
+
+**Health checks (controlli di stato).** Un pannello che si apre e si chiude (con il mouse o con la tastiera), uguale nelle due schermate. Nell'intestazione vedi subito il verdetto: **No issues found** oppure quanti *warning* e *notice* ci sono. Un **Warning** (avviso, bordo ambra) è qualcosa che probabilmente non funziona; un **Notice** (nota, bordo colorato) è un'informazione da conoscere. Ogni voce ha sempre l'icona **e** la parola, mai solo un colore. Se non c'è nessun problema il pannello resta chiuso e dice "No issues found".
+
+| Controllo | Gravità | Cosa significa | Cosa fare |
+|---|---|---|---|
+| Taxonomies not attached to any entity | Warning | Una tassonomia non è collegata a nessuna entità, quindi non è registrata: sparisce dall'editor e dal sito. I termini restano nel database. | Clicca **Edit** e collegala a un'entità (oppure eliminala se non serve più). |
+| URL base clashes | Warning | L'URL base di un'entità o di una tassonomia coincide ora con un'altra cosa del sito: una pagina o un articolo pubblicato, un altro tipo di contenuto (per esempio di un plugin) o un altro elemento del Manager. Una delle due non sarà raggiungibile. | Cambia l'URL base con **Edit**, oppure cambia l'indirizzo dell'altra pagina (**Edit page**). |
+| Rewrite rules not up to date | Warning | Gli indirizzi dell'elemento non sono ancora nelle regole salvate: le sue pagine possono dare "non trovata". Succede, per esempio, se il sito è stato spostato o le regole sono state azzerate. | Clicca **Open permalink settings** e poi **Salva le modifiche**, senza cambiare nulla. |
+| Limit reached | Warning | Hai raggiunto il massimo di 20 entità (o di 20 tassonomie). | Elimina un elemento che non usi più per poterne aggiungere un altro. |
+| Permalinks are "Plain" | Notice | Con i permalink "Semplici" gli indirizzi leggibili (per esempio `/giocatori/`) non funzionano. In questo caso non compare il controllo sulle regole (sarebbe rumore). | Clicca **Open permalink settings** e scegli un'altra struttura, per esempio "Nome articolo". |
+| Templates edited in the Site Editor | Notice | Hai modificato nel Site Editor un template generato (elenco, singolo o pagina di un termine). Quella copia **prevale**: se poi cambi archivio, tassonomie o campi dell'entità, il template non si aggiorna. | Se vuoi la versione generata, apri **Open the templates in the Site Editor**, trova il modello e usa **Reset** (o *Clear customizations*). Se la modifica è voluta, non fare nulla. |
+| Saved templates that are no longer used | Notice | Restano nel database dei template salvati che non corrispondono più a niente (l'entità o la tassonomia è stata eliminata, l'archivio è stato spento o la tassonomia scollegata). Sono innocui. | Puoi eliminarli dal Site Editor; oppure ignorarli. |
+| Close to the limit | Notice | Sei all'80% o più del massimo (16 di 20). | Nessuna azione: è solo un promemoria. |
+
+Alcune cose che il pannello **non** segnala di proposito: un articolo con lo stesso indirizzo di una base se i tuoi permalink contengono la data o la categoria (in quel caso l'indirizzo dell'articolo è diverso); pagine in bozza o nel cestino; le regole di rewrite se WordPress non le ha ancora generate.
+
 ### Eliminare più elementi insieme
 
 1. Spunta le caselle delle righe che vuoi eliminare (la casella nell'intestazione le seleziona tutte quelle della pagina).

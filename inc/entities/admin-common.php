@@ -3,6 +3,7 @@
  * Entity Manager admin: what the "Entities" and "Taxonomies" screens share.
  *
  * - The layout of the screens: header, tabs, empty-state card, delete confirmation.
+ *   (The summary dashboard of the two lists is in dashboard.php.)
  * - The one stylesheet, enqueued ONLY on these two screens (see
  *   glinf_entities_load_screen(): it hooks the enqueue from `load-{screen}`).
  * - The plumbing of the lists: the lazy loading of the WP_List_Table classes,
@@ -411,24 +412,13 @@ function glinf_entities_render_tabs( string $current ): void {
 }
 
 /**
- * Reserved spot, at the top of both screens, for the summary dashboard.
- *
- * Phase C of the Entity Manager redesign will print the dashboard here (counters,
- * shortcuts). It prints nothing today. It runs right under the tabs, before the
- * list or the form, on every screen of the Manager.
- *
- * @param string $section "entities" or "taxonomies".
- * @return void
- */
-function glinf_entities_render_dashboard( string $section ): void {
-	unset( $section );
-}
-
-/**
  * Opens a screen of the Manager: the wrapper, the heading with its action and the tabs.
  *
  * The caller closes the wrapper with `</div>`. The heading and the action are
- * on the same line (core "wp-heading-inline" pattern) and the tabs follow.
+ * on the same line (core "wp-heading-inline" pattern) and the tabs follow. The
+ * summary dashboard is NOT printed here (this runs on the forms and on the delete
+ * confirmations too): the two list renderers call glinf_entities_render_dashboard()
+ * themselves (see dashboard.php).
  *
  * @param string                              $section "entities" or "taxonomies" (the tab that stays active).
  * @param string                              $title   Heading of the screen.
@@ -446,7 +436,6 @@ function glinf_entities_render_page_start( string $section, string $title, ?arra
 
 		<?php
 		glinf_entities_render_tabs( $section );
-		glinf_entities_render_dashboard( $section );
 }
 
 /**

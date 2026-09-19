@@ -17,6 +17,8 @@ require_once GLINF_DIR . 'inc/entities/capabilities.php';
 require_once GLINF_DIR . 'inc/entities/register.php';
 require_once GLINF_DIR . 'inc/entities/templates.php';
 require_once GLINF_DIR . 'inc/entities/list-data.php';
+require_once GLINF_DIR . 'inc/entities/dashboard-data.php';
 require_once GLINF_DIR . 'inc/entities/admin-common.php';
+require_once GLINF_DIR . 'inc/entities/dashboard.php';
 require_once GLINF_DIR . 'inc/entities/admin.php';
 require_once GLINF_DIR . 'inc/entities/admin-taxonomies.php';

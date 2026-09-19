@@ -94,7 +94,7 @@ Nessun flush aggiuntivo. `glinf_save_config()` normalizza e scrive l'option; se 
 
 ## Entity Manager: le schermate di elenco (`WP_List_Table`)
 
-Riguarda `inc/entities/admin.php`, `admin-taxonomies.php`, `admin-common.php`, `list-data.php`, `list-tables.php` e `assets/css/admin-entities.css`. Le decisioni di progetto sono in `.claude/CLAUDE.md`, sezione "Entità (CPT builder)".
+Riguarda `inc/entities/admin.php`, `admin-taxonomies.php`, `admin-common.php`, `list-data.php`, `list-tables.php` e `assets/css/admin-entities.css` (la dashboard sopra le liste è descritta nella sezione seguente). Le decisioni di progetto sono in `.claude/CLAUDE.md`, sezione "Entità (CPT builder)".
 
 ### Chi fa cosa
 
@@ -163,9 +163,62 @@ Screen Options: l'opzione utente è `glinf_entities_per_page` / `glinf_taxonomie
 
 Sotto i 783 px il core nasconde tutte le azioni in alto (`.tablenav.top .actions`) e lascia solo quelle sotto la tabella: il CSS riattiva il filtro (`.glinf-em-filter`), altrimenti su telefono non si potrebbe filtrare.
 
-### Punto riservato per la dashboard (fase C)
+## Entity Manager: la dashboard di riepilogo
 
-`glinf_entities_render_dashboard( $section )` è chiamata da `glinf_entities_render_page_start()` subito sotto le schede, prima di avvisi, lista e moduli, su tutte le schermate. Oggi non stampa nulla.
+Riguarda `inc/entities/dashboard-data.php` (logica pura), `inc/entities/dashboard.php` (lettura del sito e disegno) e la sezione "Dashboard" di `assets/css/admin-entities.css`. Guida per l'utente: `docs/guida-utente.md`, sezione "La dashboard".
+
+### Dove compare
+
+`glinf_entities_render_dashboard( $section )` è chiamata **solo** da `glinf_render_entities_list()` e `glinf_render_taxonomies_list()`, subito dopo l'avviso e prima di introduzione e tabella. **Non** dal titolo comune (`glinf_entities_render_page_start()`): quello gira anche per i moduli add/edit e per le schermate di conferma dell'eliminazione, dove la dashboard non deve stare. Un `edit`/`confirm-delete` con slug sconosciuto ripiega sulla lista e quindi la mostra. Con la configurazione vuota non stampa i contatori; stampa il pannello dei controlli solo se ha qualcosa da segnalare (per esempio template salvati rimasti dopo aver eliminato tutte le entità).
+
+### Due file, come per le liste
+
+| File | Responsabilità |
+|---|---|
+| `dashboard-data.php` | **Pura**: nessuna query, nessuna superglobale, nessuna scrittura. Riceve la configurazione normalizzata e un **contesto** e restituisce array di testo semplice (non escapato: si escapa dove si stampa). Contatori: `glinf_dashboard_stats()`. Controlli: `glinf_dashboard_get_health_checks()`, un `glinf_dashboard_check_<nome>()` per controllo. |
+| `dashboard.php` | Raccoglie i fatti che servono a WordPress (`glinf_dashboard_build_context()`, `glinf_dashboard_collect_counts()`) e stampa (`glinf_dashboard_render_*()`). Sola lettura, nessun transient né option. |
+
+Contatori: i numeri delle viste ("With archive", "Shared", …) vengono da `glinf_list_count_views()`, la stessa funzione che stampa i conteggi sopra la tabella, quindi carta e vista non possono divergere. Il totale dei contenuti e quello dei termini usano la memoizzazione per richiesta di `glinf_entities_count_items()` e `glinf_taxonomies_count_terms()`, le stesse funzioni delle colonne *Content* e *Terms*: la query si fa una volta sola per entità/tassonomia, poi si riusa. Nessuna cache persistente: i dati sono sempre freschi.
+
+### Il contesto iniettabile
+
+`glinf_dashboard_get_health_checks( array $config, array $context )`. Chiavi del contesto (tutte facoltative: una chiave mancante significa "niente da segnalare", vedi `glinf_dashboard_normalize_context()`):
+
+| Chiave | Contenuto | Chi la riempie |
+|---|---|---|
+| `permalink_structure` | valore di `permalink_structure` (`''` = "Plain") | `get_option()` (autoload) |
+| `rewrite_rules` | regole salvate, `pattern => query` (vuoto = non ancora generate) | `get_option( 'rewrite_rules' )` (autoload) |
+| `registered_routes` | `{slug, owner, kind}` per ogni post type/tassonomia registrati | `glinf_get_registered_rewrite_routes()` |
+| `content_paths` | pagine/articoli pubblicati di primo livello con lo stesso path di una base | 1 query `WP_Query` con `post_name__in` |
+| `custom_templates` | slug dei `wp_template` salvati con prefisso `single-glinf_`/`archive-glinf_`/`taxonomy-glinf_` | 1 query preparata |
+| `urls` | link di azione (`permalinks`, `site_editor`); `''` se l'utente non può seguirli | `admin_url()` + `current_user_can()` |
+
+Un test costruisce il contesto a mano e non tocca il database.
+
+### Come aggiungere un controllo
+
+1. Scrivi `glinf_dashboard_check_<nome>( ... ): ?array` in `dashboard-data.php`: restituisce `glinf_dashboard_check( $id, 'warning'|'notice', $messaggio, $elementi, $azioni )` oppure `null` se va tutto bene. Gli elementi si costruiscono con `glinf_dashboard_item()` (etichetta, codice, dettaglio, link).
+2. Chiamalo da `glinf_dashboard_get_health_checks()`: l'ordine nell'elenco è l'ordine di visualizzazione dentro la stessa gravità (i *warning* vengono prima dei *notice*).
+3. Se serve un dato nuovo, aggiungi la chiave al contesto in `glinf_dashboard_normalize_context()` con un valore neutro, riempila in `glinf_dashboard_build_context()` e documentala qui.
+4. Aggiungi i test (caso positivo, negativo, "nessun problema").
+
+### Le scelte dei controlli (e i falsi positivi evitati)
+
+- **Rotta dell'elemento stesso**: `glinf_get_registered_rewrite_routes()` restituisce anche il proprietario di ogni rotta (nome del post type/tassonomia). Il controllo dei conflitti ignora le rotte dei nostri elementi (un elemento non è in conflitto con la propria rotta; due elementi con la stessa base sono già coperti dal confronto sulla configurazione). `glinf_get_registered_rewrite_slugs()` è ora `array_column` di quella funzione: stesso risultato di prima, quindi la validazione dei moduli (`glinf_url_base_collides_with_site()`) non cambia.
+- **Solo elementi attivi**: una tassonomia senza entità non è registrata, non ha URL e non viene controllata per conflitti e regole (la segnala già il suo controllo).
+- **Articoli**: hanno un indirizzo a un solo segmento solo con la struttura `/%postname%/` (anche con prefisso `index.php/`); con date o categorie nel permalink non si segnalano. Le pagine sì, con qualsiasi struttura. Solo elementi **pubblicati** e di **primo livello**.
+- **Regole di rewrite**: per ogni entità si cerca la regola dei singoli (`<base>/…` con query `index.php?glinf_<slug>=…`) e, se ha archivio, quella dell'archivio (chiave esatta `<base>/?$`); per ogni tassonomia attiva la regola dei termini. Le chiavi con prefisso `index.php/` (permalink "quasi belli") si confrontano senza prefisso. Non si dice nulla se i permalink sono "Plain" (c'è il proprio controllo) o se l'option è vuota (WordPress la costruisce alla prima visita del sito: dall'admin non si può giudicare).
+- **Template**: una riga con slug generato è *sostitutiva* se esiste ancora il template corrispondente (entità: `single-`; entità con archivio: `archive-`; tassonomia con almeno un'entità: `taxonomy-`), *orfana* altrimenti. Gli slug che non hanno la forma generata (`^(single|archive|taxonomy)-glinf_[a-z0-9_]+$`) si ignorano.
+- **Perché una query preparata e non `get_block_templates()`**: `get_block_templates()` legge anche i file di template del tema e dei plugin e cerca solo slug noti in anticipo, mentre gli orfani si trovano solo per prefisso; `WP_Query` non sa fare il prefisso e caricherebbe l'intero contenuto di ogni template (più tre query per il termine del tema) per leggere una colonna. La query preparata usa le stesse condizioni del core: `wp_template` pubblicato, termine `wp_theme` con nome uguale a `get_stylesheet()`. Una sola query, una sola colonna, limite 200.
+- **Link al Site Editor**: `site-editor.php?p=/template`, l'elenco dei modelli. È l'indirizzo in cui lo stesso `wp-admin/site-editor.php` di WordPress 7.1 converte i vecchi parametri `postType=wp_template`. Il link diretto al singolo modello è cambiato più volte tra le versioni e non lo si è verificato in un browser: per questo si rimanda all'elenco.
+
+### Costo in query
+
+Il pannello aggiunge **2 query** alla schermata (regole e struttura dei permalink sono option in autoload): le pagine con lo stesso path (1, più una seconda solo se ne trova) e i template salvati (1). I totali *Content* (una `wp_count_posts` per entità) e *Terms* (una `wp_count_terms` per tassonomia registrata) si condividono con le colonne della tabella: non si pagano due volte.
+
+### CSS
+
+Sezione "Dashboard" di `admin-entities.css`: griglia `auto-fit` che va a capo, senza media query per il numero di colonne (sotto i 783 px si riduce solo la larghezza minima delle carte). Il riepilogo è un `<details>` con `<summary>` in `display: list-item` (con `flex` il browser toglie il triangolo, che è ciò che dice che si apre). L'ambra dei *warning* (`--glinf-em-warning`, `#996800`, 4,9:1 su bianco) è quella delle notifiche di avviso del core e non cambia con lo schema colore. La gravità è sempre icona (`aria-hidden`) più parola, e il *warning* ha anche il bordo più spesso: non dipende dal colore. I pulsanti di azione vanno a capo (i `.button` del core non lo fanno e a 320 px sfonderebbero la carta).
 
 ## Versione minima di WordPress: 6.7
 

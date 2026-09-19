@@ -235,24 +235,35 @@ function glinf_taxonomies_pull_form_state( string $original ): ?array {
  *
  * Terms exist only for a registered taxonomy (one attached to at least one
  * entity): the count is skipped otherwise. This runs on an admin screen only,
- * never on the front end, for the rows of the current page only.
+ * never on the front end. It is computed once per request and per taxonomy, so
+ * the list column, the delete confirmation and the dashboard share one query.
+ * Nothing is persisted: every request starts from a fresh count.
  *
  * @param string $key Registered taxonomy key.
  * @return int|null Null when the taxonomy is not registered (or the count failed).
  */
 function glinf_taxonomies_count_terms( string $key ): ?int {
-	if ( ! taxonomy_exists( $key ) ) {
-		return null;
+	static $memo = array();
+
+	if ( array_key_exists( $key, $memo ) ) {
+		return $memo[ $key ];
 	}
 
-	$count = wp_count_terms(
-		array(
-			'taxonomy'   => $key,
-			'hide_empty' => false,
-		)
-	);
+	$total = null;
 
-	return is_wp_error( $count ) ? null : (int) $count;
+	if ( taxonomy_exists( $key ) ) {
+		$count = wp_count_terms(
+			array(
+				'taxonomy'   => $key,
+				'hide_empty' => false,
+			)
+		);
+		$total = is_wp_error( $count ) ? null : (int) $count;
+	}
+
+	$memo[ $key ] = $total;
+
+	return $total;
 }
 
 /**
@@ -358,6 +369,9 @@ function glinf_render_taxonomies_list( string $notice_code ): void {
 	glinf_entities_render_page_start( 'taxonomies', __( 'Taxonomies', 'gl-infinite-theme' ), $can_add ? $new_link : null );
 
 	glinf_entities_render_notice( $notice_code, $messages );
+
+	// Only the list shows it: the forms and the delete confirmation do not.
+	glinf_entities_render_dashboard( 'taxonomies' );
 	?>
 
 		<p class="glinf-em-intro">

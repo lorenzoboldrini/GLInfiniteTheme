@@ -962,31 +962,59 @@ function glinf_save_config( array $items, array $taxonomies ): bool {
 }
 
 /**
+ * Returns every route segment claimed by a registered post type or taxonomy, with its owner.
+ *
+ * The owner is the registered name of the post type or taxonomy, so a caller can
+ * tell a route that belongs to this theme's own entities from one that belongs to
+ * somebody else (see the health checks in dashboard-data.php). It reads the
+ * objects as registered NOW, so it always reflects the effective base (explicit
+ * or derived). Post types and taxonomies are walked separately: a post type and a
+ * taxonomy that share a name must both be reported.
+ *
+ * @return array<int, array{slug: string, owner: string, kind: string}> `kind` is "post_type" or "taxonomy".
+ */
+function glinf_get_registered_rewrite_routes(): array {
+	$routes = array();
+
+	$groups = array(
+		'post_type' => get_post_types( array(), 'objects' ),
+		'taxonomy'  => get_taxonomies( array(), 'objects' ),
+	);
+
+	foreach ( $groups as $kind => $objects ) {
+		foreach ( $objects as $object ) {
+			$owner = isset( $object->name ) && is_string( $object->name ) ? $object->name : '';
+
+			if ( isset( $object->rewrite ) && is_array( $object->rewrite ) && isset( $object->rewrite['slug'] ) && is_string( $object->rewrite['slug'] ) ) {
+				$routes[] = array(
+					'slug'  => strtolower( trim( $object->rewrite['slug'], '/' ) ),
+					'owner' => $owner,
+					'kind'  => $kind,
+				);
+			}
+			if ( isset( $object->has_archive ) && is_string( $object->has_archive ) ) {
+				$routes[] = array(
+					'slug'  => strtolower( trim( $object->has_archive, '/' ) ),
+					'owner' => $owner,
+					'kind'  => $kind,
+				);
+			}
+		}
+	}
+
+	return $routes;
+}
+
+/**
  * Returns every URL segment already claimed by a registered post type or taxonomy.
  *
- * Used so that a URL base never shadows an existing route. It reads the objects
- * as registered NOW, so it always reflects the effective base (explicit or derived).
+ * Used so that a URL base never shadows an existing route. It is the list of
+ * glinf_get_registered_rewrite_routes() without the owners.
  *
  * @return string[]
  */
 function glinf_get_registered_rewrite_slugs(): array {
-	$slugs = array();
-
-	$objects = array_merge(
-		get_post_types( array(), 'objects' ),
-		get_taxonomies( array(), 'objects' )
-	);
-
-	foreach ( $objects as $object ) {
-		if ( isset( $object->rewrite ) && is_array( $object->rewrite ) && isset( $object->rewrite['slug'] ) && is_string( $object->rewrite['slug'] ) ) {
-			$slugs[] = strtolower( trim( $object->rewrite['slug'], '/' ) );
-		}
-		if ( isset( $object->has_archive ) && is_string( $object->has_archive ) ) {
-			$slugs[] = strtolower( trim( $object->has_archive, '/' ) );
-		}
-	}
-
-	return array_values( array_unique( $slugs ) );
+	return array_values( array_unique( array_column( glinf_get_registered_rewrite_routes(), 'slug' ) ) );
 }
 
 /**

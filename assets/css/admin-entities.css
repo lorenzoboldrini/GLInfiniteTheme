@@ -8,6 +8,7 @@
  *   user picked; neutral greys are the ones core uses in every scheme;
  * - a state is never conveyed by colour alone: badges always carry text, and the
  *   "off" ones also have a dashed border;
+ * - the warning colour is the amber of core's warning notices, always paired with an icon and the word "Warning";
  * - logical properties (inline/block) instead of left/right, so right-to-left
  *   languages work with no second file;
  * - no JavaScript, no external font: transitions are limited to hover states and
@@ -25,6 +26,9 @@
 	--glinf-em-tint: #f0f0f1;
 	--glinf-em-danger: #b32d2e;
 	--glinf-em-danger-strong: #8a2424;
+	/* Amber of the core "warning" notices (4.9:1 on white): the accent colour would say nothing about severity. */
+	--glinf-em-warning: #996800;
+	--glinf-em-warning-tint: #fcf9e8;
 	--glinf-em-radius: 8px;
 }
 
@@ -209,6 +213,262 @@
 	color: #fff;
 	box-shadow: 0 0 0 1px #fff, 0 0 0 3px var(--glinf-em-danger);
 	outline: 2px solid transparent;
+}
+
+/* Dashboard: counter cards and health checks, above the list. */
+.glinf-em-dashboard {
+	margin-block: 0 20px;
+}
+
+.glinf-em-stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+	gap: 12px;
+	margin: 0 0 12px;
+	padding: 0;
+	list-style: none;
+}
+
+.glinf-em-stat {
+	min-width: 0;
+	margin: 0;
+}
+
+.glinf-em-stat__body {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	box-sizing: border-box;
+	height: 100%;
+	padding: 14px 16px;
+	border: 1px solid var(--glinf-em-border);
+	border-radius: var(--glinf-em-radius);
+	background: var(--glinf-em-surface);
+	text-decoration: none;
+}
+
+/* A card that is not a link is plain text; a link keeps the colour core gives to links. */
+span.glinf-em-stat__body {
+	color: var(--glinf-em-text);
+}
+
+.glinf-em-stat__value {
+	font-size: 28px;
+	font-weight: 600;
+	line-height: 1.2;
+}
+
+.glinf-em-stat__max {
+	color: var(--glinf-em-muted);
+	font-size: 14px;
+	font-weight: 400;
+}
+
+.glinf-em-stat__label {
+	color: var(--glinf-em-muted);
+	font-size: 13px;
+	line-height: 1.4;
+	overflow-wrap: anywhere;
+}
+
+/* The label of a link card is underlined: the link is not signalled by colour alone. */
+.glinf-em-stat__body--link .glinf-em-stat__label {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.glinf-em-stat__body--link:hover {
+	border-color: var(--glinf-em-accent);
+}
+
+.glinf-em-stat__body--link:focus {
+	border-color: var(--glinf-em-accent);
+	box-shadow: 0 0 0 var(--wp-admin-border-width-focus, 1.5px) var(--glinf-em-accent);
+	outline: 2px solid transparent;
+}
+
+.glinf-em-health {
+	box-sizing: border-box;
+	border: 1px solid var(--glinf-em-border);
+	border-radius: var(--glinf-em-radius);
+	background: var(--glinf-em-surface);
+}
+
+/* A list item (not a flex box) so the browser keeps the disclosure triangle: it is what says the panel can be opened. */
+.glinf-em-health__summary {
+	display: list-item;
+	list-style-position: inside;
+	padding: 12px 16px;
+	border-radius: var(--glinf-em-radius);
+	cursor: pointer;
+}
+
+.glinf-em-health__summary:focus {
+	box-shadow: 0 0 0 var(--wp-admin-border-width-focus, 1.5px) var(--glinf-em-accent);
+	outline: 2px solid transparent;
+}
+
+.glinf-em-health__title {
+	margin-inline-end: 12px;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+/* Verdict pills in the summary: an icon and a word, plus a thicker border for warnings. */
+.glinf-em-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	box-sizing: border-box;
+	margin-inline-end: 8px;
+	padding: 1px 10px 1px 6px;
+	vertical-align: middle;
+	border: 1px solid var(--glinf-em-accent);
+	border-radius: 999px;
+	background: var(--glinf-em-tint);
+	color: var(--glinf-em-text);
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.7;
+	white-space: nowrap;
+}
+
+.glinf-em-status .dashicons {
+	flex: none;
+	width: 16px;
+	height: 16px;
+	color: var(--glinf-em-accent-strong);
+	font-size: 16px;
+}
+
+.glinf-em-status--warning {
+	border: 2px solid var(--glinf-em-warning);
+	padding-block: 0;
+	background: var(--glinf-em-warning-tint);
+}
+
+.glinf-em-status--warning .dashicons {
+	color: var(--glinf-em-warning);
+}
+
+.glinf-em-health__ok {
+	margin: 0;
+	padding: 12px 16px;
+	border-block-start: 1px solid var(--glinf-em-border);
+	color: var(--glinf-em-muted);
+}
+
+.glinf-em-checks {
+	margin: 0;
+	padding: 4px 16px;
+	border-block-start: 1px solid var(--glinf-em-border);
+	list-style: none;
+}
+
+.glinf-em-check {
+	margin-block: 12px;
+	margin-inline: 0;
+	padding-block: 2px;
+	padding-inline: 12px 0;
+	border-inline-start: 4px solid var(--glinf-em-accent);
+}
+
+.glinf-em-check--warning {
+	border-inline-start-color: var(--glinf-em-warning);
+}
+
+.glinf-em-check__message {
+	max-width: 70em;
+	margin: 0 0 8px;
+	font-size: 14px;
+}
+
+.glinf-em-severity {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	box-sizing: border-box;
+	margin-inline-end: 6px;
+	padding: 0 8px 0 4px;
+	border: 1px solid var(--glinf-em-accent);
+	border-radius: 4px;
+	background: var(--glinf-em-tint);
+	color: var(--glinf-em-text);
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.7;
+	vertical-align: middle;
+}
+
+.glinf-em-severity .dashicons {
+	flex: none;
+	width: 16px;
+	height: 16px;
+	color: var(--glinf-em-accent-strong);
+	font-size: 16px;
+}
+
+.glinf-em-severity--warning {
+	border: 2px solid var(--glinf-em-warning);
+	padding-block: 0;
+	background: var(--glinf-em-warning-tint);
+}
+
+.glinf-em-severity--warning .dashicons {
+	color: var(--glinf-em-warning);
+}
+
+.glinf-em-check__items {
+	margin: 0 0 8px;
+	padding: 0;
+	list-style: none;
+}
+
+.glinf-em-check__items li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 2px 10px;
+	margin: 0 0 6px;
+}
+
+.glinf-em-check__items code {
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-size: 12px;
+	overflow-wrap: anywhere;
+}
+
+.glinf-em-check__detail {
+	color: var(--glinf-em-muted);
+}
+
+.glinf-em-check__links {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 2px 12px;
+}
+
+.glinf-em-check__actions {
+	margin: 8px 0 0;
+}
+
+/* Core buttons never wrap: a long label would overflow the card at 320px. */
+.glinf-em-check__actions .button {
+	max-width: 100%;
+	height: auto;
+	min-height: 30px;
+	white-space: normal;
+	text-align: center;
+	line-height: 1.5;
+	padding-block: 3px;
+}
+
+@media (forced-colors: active) {
+	.glinf-em-status,
+	.glinf-em-severity {
+		border-color: CanvasText;
+	}
 }
 
 /* Views, search and filters. */
@@ -403,12 +663,33 @@
 	.glinf-em-tabs .nav-tab {
 		transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
 	}
+
+	.glinf-em-stat__body--link {
+		transition: border-color 0.15s ease-in-out;
+	}
 }
 
 /* Narrow screens: the core list table collapses to the name column; keep the rest tidy. */
 @media screen and (max-width: 782px) {
 	.glinf-em-card {
 		padding: 16px;
+	}
+
+	.glinf-em-stats {
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+	}
+
+	.glinf-em-stat__body {
+		padding: 12px;
+	}
+
+	.glinf-em-health__summary,
+	.glinf-em-health__ok {
+		padding-inline: 12px;
+	}
+
+	.glinf-em-checks {
+		padding-inline: 12px;
 	}
 
 	.glinf-em-card .form-table th {
