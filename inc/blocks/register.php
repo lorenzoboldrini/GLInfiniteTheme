@@ -23,8 +23,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * @return void
  */
-function tu_register_blocks(): void {
-	$block_files = glob( TU_DIR . 'build/blocks/*/block.json' );
+function glinf_register_blocks(): void {
+	$block_files = glob( GLINF_DIR . 'build/blocks/*/block.json' );
 
 	// glob() returns false on failure and an empty array when nothing matches.
 	if ( false === $block_files || array() === $block_files ) {
@@ -35,4 +35,4 @@ function tu_register_blocks(): void {
 		register_block_type( dirname( $block_file ) );
 	}
 }
-add_action( 'init', 'tu_register_blocks' );
+add_action( 'init', 'glinf_register_blocks' );

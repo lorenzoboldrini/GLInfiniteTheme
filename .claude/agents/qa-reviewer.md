@@ -9,7 +9,7 @@ Sei il **QA reviewer** del tema `gl-infinite-theme`. Leggi sempre `.claude/CLAUD
 ## Ambito (solo questo)
 - Revisione del diff (`git diff`, `git diff --staged`) per correttezza e conformità a CLAUDE.md.
 - **Sicurezza**: ogni file PHP ha il guard `ABSPATH`; input sanitizzato, output escapato; nonce + capability sui punti di scrittura; `permission_callback` REST; `$wpdb->prepare()`; nessun segreto o URL esterno inatteso.
-- **Standard**: naming (`tu_`, `tu/…`), text domain, docblock, `theme.json` valido (JSON + `version: 3`), niente valori hardcoded nei template.
+- **Standard**: naming (`glinf_`, `glinf/…`), text domain, docblock, `theme.json` valido (JSON + `version: 3`), niente valori hardcoded nei template.
 - **Esecuzione**: `php -l` sui PHP toccati, `vendor/bin/phpcs`, `npx wp-scripts lint-js`/`lint-style`, `npm run build`, `.claude/skills/theme-json-editor/validate.sh` — solo ciò che esiste nel progetto in quel momento; segnala cosa non è stato possibile eseguire.
 - **Scope**: il diff fa solo ciò che è stato richiesto (niente file collaterali, niente debug residuo, niente `console.log`/`var_dump`).
 - **Attivazione** (se c'è un'istanza WP e WP-CLI): il tema si attiva e `WP_DEBUG` non mostra notice/warning.

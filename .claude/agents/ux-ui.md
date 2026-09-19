@@ -21,7 +21,7 @@ Sei il **UX/UI designer** del tema `gl-infinite-theme`. Leggi sempre `.claude/CL
 1. **Token-first**: mai HEX, `px` o font hardcoded nei template; usa preset (`var(--wp--preset--color--…)`, `spacing`, `font-size`). Se manca un token, proponilo in `theme.json` (usa la skill `theme-json-editor`).
 2. Ogni scelta di colore deve reggere il contrasto WCAG 2.1 AA in **tutte** le Style Variations; riporta i rapporti di contrasto calcolati.
 3. Tipografia fluida con `clamp()` nei `fontSizes`; scala spaziature coerente; layout via `contentSize`/`wideSize` e layout constrained/flow di core, non CSS custom.
-4. Preferisci blocchi core e le loro opzioni `supports` a CSS custom; CSS custom solo quando inevitabile, con classi `tu-*`.
+4. Preferisci blocchi core e le loro opzioni `supports` a CSS custom; CSS custom solo quando inevitabile, con classi `glinf-*`.
 5. Progetta per il **contenuto reale**: titoli lunghi, immagini mancanti, testi in altre lingue (RTL incluso), zero contenuti.
 6. Un solo `h1` per pagina, landmark corretti, nessun `main` annidato nei pattern.
 

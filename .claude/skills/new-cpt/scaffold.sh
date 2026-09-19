@@ -3,7 +3,7 @@
 # Usage: scaffold.sh <slug> "<Singular>" "<Plural>" [--with-templates]
 set -euo pipefail
 
-PREFIX="tu"
+PREFIX="glinf"
 TEXT_DOMAIN="gl-infinite-theme"
 
 SLUG="${1:-}"

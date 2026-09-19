@@ -1,10 +1,10 @@
-// Front-end and editor styles for tu/call-to-action.
+// Front-end and editor styles for glinf/call-to-action.
 // Only theme.json presets are used. Defaults sit in :where() (zero specificity)
 // so colors, spacing, typography, border and shadow picked through block
 // supports always win. The card look (border, radius, shadow) comes from the
 // --wp--custom--card--* tokens, which each Style Variation redefines in
 // theme.json; the fallbacks cover themes that do not define them yet.
-:where(.wp-block-tu-call-to-action) {
+:where(.wp-block-glinf-call-to-action) {
 	padding: var(--wp--preset--spacing--60);
 	border: var(--wp--custom--card--border, none);
 	border-radius: var(--wp--custom--card--radius, var(--wp--custom--radius--lg));
@@ -13,7 +13,7 @@
 	color: var(--wp--preset--color--contrast);
 }
 
-.wp-block-tu-call-to-action {
+.wp-block-glinf-call-to-action {
 	// Keep the vertical rhythm here: block supports do not serialize blockGap
 	// on blocks without layout support.
 	> * {
@@ -38,12 +38,12 @@
 
 	// theme.json sets a heading color that would otherwise stop the title
 	// from following the text color chosen for the block.
-	.tu-call-to-action__title {
+	.glinf-call-to-action__title {
 		color: inherit;
 	}
 
 	// Remaining button styles come from theme.json via .wp-element-button.
-	.tu-call-to-action__button {
+	.glinf-call-to-action__button {
 		display: inline-block;
 	}
 }

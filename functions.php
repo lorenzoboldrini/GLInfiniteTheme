@@ -7,8 +7,14 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'TU_VERSION', wp_get_theme( get_template() )->get( 'Version' ) );
-define( 'TU_DIR', trailingslashit( get_template_directory() ) );
+define( 'GLINF_VERSION', wp_get_theme( get_template() )->get( 'Version' ) );
+define( 'GLINF_DIR', trailingslashit( get_template_directory() ) );
 
-require_once TU_DIR . 'inc/setup.php';
-require_once TU_DIR . 'inc/blocks/register.php';
+require_once GLINF_DIR . 'inc/setup.php';
+require_once GLINF_DIR . 'inc/blocks/register.php';
+require_once GLINF_DIR . 'inc/entities/config.php';
+require_once GLINF_DIR . 'inc/entities/capabilities.php';
+require_once GLINF_DIR . 'inc/entities/register.php';
+require_once GLINF_DIR . 'inc/entities/templates.php';
+require_once GLINF_DIR . 'inc/entities/admin.php';
+require_once GLINF_DIR . 'inc/entities/admin-taxonomies.php';

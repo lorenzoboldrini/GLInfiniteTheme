@@ -14,10 +14,10 @@ defined( 'ABSPATH' ) || exit;
  *
  * @return void
  */
-function tu_setup(): void {
-	load_theme_textdomain( 'gl-infinite-theme', TU_DIR . 'languages' );
+function glinf_setup(): void {
+	load_theme_textdomain( 'gl-infinite-theme', GLINF_DIR . 'languages' );
 
 	add_theme_support( 'wp-block-styles' );
 	add_theme_support( 'responsive-embeds' );
 }
-add_action( 'after_setup_theme', 'tu_setup' );
+add_action( 'after_setup_theme', 'glinf_setup' );

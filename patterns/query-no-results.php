@@ -1,7 +1,7 @@
 <?php
 /**
  * Title: Query no results
- * Slug: tu/query-no-results
+ * Slug: glinf/query-no-results
  * Description: Message shown when a query loop has no posts.
  * Inserter: false
  *

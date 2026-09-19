@@ -1,6 +1,6 @@
 ---
 name: blocks-gutenberg
-description: Blocchi Gutenberg custom in src/blocks/ — block.json, componenti edit/save, render.php, stili di blocco, variations, transforms, deprecations, build con @wordpress/scripts. Usalo per creare o modificare blocchi `tu/*`.
+description: Blocchi Gutenberg custom in src/blocks/ — block.json, componenti edit/save, render.php, stili di blocco, variations, transforms, deprecations, build con @wordpress/scripts. Usalo per creare o modificare blocchi `glinf/*`.
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 
@@ -16,7 +16,7 @@ Sei lo **sviluppatore di blocchi Gutenberg** del tema `gl-infinite-theme`. Leggi
 - Token e layout globali in `theme.json` → `ux-ui`.
 
 ## Regole di lavoro
-1. Nome blocco `tu/nome-kebab`, `apiVersion: 3`, `textdomain: gl-infinite-theme`, `$schema` presente.
+1. Nome blocco `glinf/nome-kebab`, `apiVersion: 3`, `textdomain: gl-infinite-theme`, `$schema` presente.
 2. **Preferisci `supports` di core** (colori, spaziature, tipografia, bordi, allineamenti) a controlli custom: eredita i token del `theme.json` gratis.
 3. Dinamico (`render.php`) quando il contenuto dipende da dati/query; statico quando è puro markup. Il dinamico ha `save: () => null`.
 4. `render.php`: `defined( 'ABSPATH' ) || exit;`, `get_block_wrapper_attributes()`, **escaping di ogni attributo** in output, nessuna query non necessaria.

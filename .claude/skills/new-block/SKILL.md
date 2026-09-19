@@ -1,6 +1,6 @@
 ---
 name: new-block
-description: Crea lo scaffolding di un nuovo blocco Gutenberg custom `tu/<nome>` in src/blocks/ (block.json, edit, save o render.php, stili). Usala quando l'utente chiede un nuovo blocco.
+description: Crea lo scaffolding di un nuovo blocco Gutenberg custom `glinf/<nome>` in src/blocks/ (block.json, edit, save o render.php, stili). Usala quando l'utente chiede un nuovo blocco.
 ---
 
 # new-block
@@ -8,7 +8,7 @@ description: Crea lo scaffolding di un nuovo blocco Gutenberg custom `tu/<nome>`
 Genera un blocco in `src/blocks/<slug>/` dai template in `templates/`. Prima di iniziare leggi `.claude/CLAUDE.md` (naming, sicurezza, a11y).
 
 ## 1. Raccogli i dati (chiedi se mancano)
-- **slug** kebab-case (`hero`, `pricing-table`) → nome blocco `tu/<slug>`
+- **slug** kebab-case (`hero`, `pricing-table`) → nome blocco `glinf/<slug>`
 - **titolo** leggibile (senza `"`, `\`, `&`, `|`)
 - **tipo**: `dynamic` (default; `render.php`, dipende da dati/query) oppure `static` (solo markup salvato)
 - **icona** dashicon (opzionale, default `smiley`)

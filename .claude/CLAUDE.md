@@ -21,8 +21,8 @@ Lingua: documentazione e comunicazione in **italiano**; codice, commenti, docblo
 
 ```
 style.css  theme.json  functions.php
-inc/         logica PHP: setup.php, blocks/register.php (registra i blocchi compilati); previsti patterns, post-types/, security
-             functions.php fa solo bootstrap: costanti (TU_VERSION, TU_DIR) e require_once da inc/
+inc/         logica PHP: setup.php, blocks/register.php (registra i blocchi compilati), entities/ (CPT builder: config, capabilities, register, templates, admin, admin-taxonomies); previsti patterns, security
+             functions.php fa solo bootstrap: costanti (GLINF_VERSION, GLINF_DIR) e require_once da inc/
 templates/   template FSE (.html)
 parts/       template part (header, footer, …)
 patterns/    block pattern e preset di pagina (.php)
@@ -39,20 +39,20 @@ docs/        documentazione di progetto
 
 | Elemento | Convenzione | Esempio |
 |---|---|---|
-| Funzioni, hook, opzioni, transient, meta key | prefisso `tu_` | `tu_enqueue_assets()` |
-| Costanti | prefisso `TU_` | `TU_VERSION` |
-| Classi PHP | `TU_Nome` | `TU_Assets` |
-| Blocchi | `tu/nome-kebab` | `tu/hero` → classe `wp-block-tu-hero` |
-| Pattern | slug `tu/nome` | `tu/page-landing` |
-| Categorie pattern | `tu-nome` | `tu-page-presets` |
-| CPT / tassonomie | `tu_nome` (max 20 caratteri) | `tu_event` |
-| Classi CSS custom | `tu-nome` (BEM leggero) | `tu-card__title` |
+| Funzioni, hook, opzioni, transient, meta key | prefisso `glinf_` | `glinf_enqueue_assets()` |
+| Costanti | prefisso `GLINF_` | `GLINF_VERSION` |
+| Classi PHP | `GLINF_Nome` | `GLINF_Assets` |
+| Blocchi | `glinf/nome-kebab` | `glinf/hero` → classe `wp-block-glinf-hero` |
+| Pattern | slug `glinf/nome` | `glinf/page-landing` |
+| Categorie pattern | `glinf-nome` | `glinf-page-presets` |
+| CPT / tassonomie | `glinf_nome` (max 20 caratteri) | `glinf_event` |
+| Classi CSS custom | `glinf-nome` (BEM leggero) | `glinf-card__title` |
 | Slug preset theme.json | semantici, non descrittivi del valore | `surface`, non `light-gray` |
 | Text domain | slug del tema: `gl-infinite-theme` | `__( 'Read more', 'gl-infinite-theme' )` |
 
-> Il prefisso `tu` è definito qui e come variabile all'inizio di ogni `scaffold.sh` nelle skill. Se cambia, aggiornare entrambi.
+> Il prefisso `glinf` (da *GL Infinite*, 5 lettere) è definito qui e come variabile all'inizio di ogni `scaffold.sh` nelle skill. Se cambia, aggiornare entrambi. Nei post type pesa sul limite di 20 caratteri: `glinf_` + slug entità ≤ 14. Rinominarlo dopo aver creato contenuti richiede una migrazione del DB (post type, option, meta, nome dei blocchi nei contenuti).
 
-Regole di i18n: ogni stringa visibile è traducibile. I testi traducibili **non** vanno nei file `.html` di template/parts (non eseguono PHP): vanno in pattern PHP richiamati con `<!-- wp:pattern {"slug":"tu/…"} /-->`.
+Regole di i18n: ogni stringa visibile è traducibile. I testi traducibili **non** vanno nei file `.html` di template/parts (non eseguono PHP): vanno in pattern PHP richiamati con `<!-- wp:pattern {"slug":"glinf/…"} /-->`.
 
 ## Sicurezza (obbligatorie, nessuna eccezione)
 
@@ -96,7 +96,7 @@ Regole di i18n: ogni stringa visibile è traducibile. I testi traducibili **non*
 
 ## Blocchi custom
 
-- Sorgenti in `src/blocks/<slug>/`, nome `tu/<slug>`, `apiVersion: 3`, `textdomain: gl-infinite-theme`. Si creano con la skill `new-block` e l'agent `blocks-gutenberg`.
+- Sorgenti in `src/blocks/<slug>/`, nome `glinf/<slug>`, `apiVersion: 3`, `textdomain: gl-infinite-theme`. Si creano con la skill `new-block` e l'agent `blocks-gutenberg`.
 - **Registrazione**: `inc/blocks/register.php` fa `register_block_type()` su ogni `build/blocks/*/block.json` (il block.json *compilato*). Senza build non registra nulla e non genera errori. Nessun enqueue manuale: WordPress carica `style` solo dove il blocco è presente e `editorScript`/`editorStyle` solo nell'editor.
 - **Preferisci blocchi dinamici** (`render.php`, `save: () => null`). Gli attributi RichText di un blocco dinamico sono attributi semplici (`type: string`, senza `source`) e si stampano con `wp_kses_post()`; testi semplici con `esc_html()`, URL con `esc_url()`; livelli heading e allineamenti con whitelist.
 - **Eredita da `theme.json`**: usa i `supports` di core (colori, spaziature, tipografia, `align`) invece di controlli custom; i bottoni usano la classe `wp-element-button` per prendere gli stili di `elements.button`. Negli stili del blocco solo variabili `--wp--preset--*` / `--wp--custom--*`, mai valori hardcoded; i default vanno in `:where()` (bassa specificità) così le scelte dell'utente vincono.
@@ -115,6 +115,20 @@ Dettagli e contrasti misurati in `docs/design-tokens.md`; guida per l'utente in 
 - **Compatibilità WP 6.6**: niente feature solo-7.0 (pseudo-selettori di blocco, `css` su elements). Il titolo di `default.json` è "Soft" (non "Default": esiste già la card "Default" del base).
 - **Verifica**: `validate.sh`, contrasti (≥4.5 testo, ≥3 UI/bordi dei campi) e matrice di copertura per ogni variation; un colore nuovo va misurato su tutte le coppie che lo usano (card, header, footer, campi).
 
+## Entità (CPT builder)
+
+Codice in `inc/entities/`; guida utente in `docs/guida-utente.md`. Due schermate sotto il menu "Entity Manager": **Entities** e **Taxonomies**.
+
+- **Storage**: un'unica option `glinf_entities` (autoload), **versione 2**: `{version, items:{<entity_slug>:{…}}, taxonomies:{<tax_slug>:{slug, singular, plural, hierarchical, entities:[<entity_slug>…]}}}`. L'associazione tassonomia↔entità vive **solo sul lato tassonomia** (`entities`): una entità = tassonomia *specifica*, più entità = *condivisa*, zero = *non collegata* (non registrata, termini conservati). Max 20 entità e 20 tassonomie, nessun limite di tassonomie per entità. Salvataggio atomico con `glinf_save_config( $items, $taxonomies )`; ogni lettura passa da `glinf_normalize_stored_config()` (che migra la v1: la chiave registrata `glinf_<entità>_<nome>` resta identica, quindi i termini non si perdono). Nessun CPT di sistema (costerebbe una query per request).
+- **Post type** `glinf_<slug>` (slug entità `^[a-z][a-z0-9_]{1,12}[a-z0-9]$`, 3–14 caratteri, per il limite di 20 del post type). **Tassonomia** `glinf_<slug>` (slug 3–26 caratteri, chiave ≤ 32), rewrite piatto `/<slug-con-trattini>/<termine>/`. Slug di entità e tassonomie **immutabili** dopo la creazione (identificano contenuti/termini nel DB), univoci tra entrambi i tipi, con blacklist filtrabile `glinf_reserved_entity_slugs` (vale per entrambi) e controllo dei conflitti di rewrite e di path (pagine/articoli esistenti).
+- **Registrazione (`init`)**: prima i post type, poi le tassonomie (`register_taxonomy( key, [post types] )`); una tassonomia con 0 entità non si registra.
+- **Eliminazioni**: entità → rimuove solo la config e, nello stesso salvataggio, ne stacca lo slug da ogni tassonomia (le tassonomie restano). Tassonomia → rimuove solo la config. In nessun caso si cancellano post o termini.
+- **Capability `manage_theme_entities`**: solo user meta, **mai** sul ruolo `administrator`, ed *effettiva* solo insieme a `manage_options` (filtro `map_meta_cap`: un utente retrocesso perde l'accesso). Assegnata **solo alla prima attivazione** (all'utente che attiva il tema) o, per i siti già attivi, con migrazione una tantum all'admin con ID più basso; poi la concede solo chi la ha già, dal profilo utente. Guard: option `glinf_entities_caps_version`. Ogni handler (`glinf_save_entity`/`glinf_delete_entity`/`glinf_save_taxonomy`/`glinf_delete_taxonomy`): cap → POST → nonce → sanitize → validate → save → redirect.
+- **Rewrite flush**: eccezione deliberata alla regola "solo `after_switch_theme`": salvataggio/eliminazione impostano il flag `glinf_entities_flush`, `wp_loaded` fa `flush_rewrite_rules( false )` solo se il flag è attivo. Allo switch del tema flusha già il core (`check_theme_switched()`): nessun flush extra.
+- **Template e pattern** generati dalla config, senza scritture su disco né post `wp_template`: per ogni entità `single-glinf_<slug>` (con `post-terms` per le tassonomie collegate) e, se ha archivio, `archive-glinf_<slug>`; per ogni tassonomia registrata `taxonomy-glinf_<slug>`, che usa la card dell'entità se è specifica e la card generica `glinf/entity-card` se è condivisa. `register_block_template()` esiste solo da WP 6.7 (guard `function_exists`; su 6.6 valgono `single.html`/`archive.html` generici). Le card ereditano le Style Variation dai token `core/post-template` del `theme.json`: nessun CSS dedicato.
+- **Cambio tema**: config, cap e contenuti restano nel DB, CPT e template spariscono finché il tema non è riattivato.
+- **Non incluso (possibile passo futuro)**: collegare Categorie/Tag nativi di WordPress o tassonomie a Articoli e Pagine.
+
 ## Workflow
 
 - **Branch**: `main` è l'unico branch di lavoro e **si lavora direttamente lì** (decisione dell'utente). Altri branch (es. per un lavoro sperimentale o un rilascio) si creano **solo su richiesta esplicita dell'utente**, e a fine lavoro vanno fusi in `main` ed eliminati. Claude non crea branch e non fa merge di sua iniziativa; il push lo fa l'utente. Per un merge richiesto usa `git merge --no-ff -m` (`git merge` non accetta `-F -`).
@@ -129,9 +143,12 @@ Dettagli e contrasti misurati in `docs/design-tokens.md`; guida per l'utente in 
 
 - [x] **Fase 1** — struttura di contesto (cartelle, CLAUDE.md, agents, skills, sicurezza, git)
 - [x] **Fase 2** — fondamenta: `style.css`, `theme.json` v3, template minimi, header/footer; tema attivabile (attivazione verificata dall'utente)
-- [x] **Fase 3** — pipeline `wp-scripts` + primo blocco `tu/call-to-action` (dinamico), registrazione in `inc/blocks/register.php`; verificato dall'utente in editor e frontend
+- [x] **Fase 3** — pipeline `wp-scripts` + primo blocco `glinf/call-to-action` (dinamico), registrazione in `inc/blocks/register.php`; verificato dall'utente in editor e frontend
 - [ ] **Fase 4** — Style Variations (`styles/`: Soft, Minimal, Fumetto, Dark) con token di design in `theme.json`; copertura uniforme e contrasti AA verificati con script, anteprima desktop verificata con screenshot. **Da verificare dall'utente**: editor e frontend, hover/"pressione" dei pulsanti, reflow a 320 px, anteprime nel Site Editor
-- [ ] Fasi successive (da definire dopo conferma): tooling qualità (composer, `phpcs.xml.dist`, `npm run lint` unico), `search.html`, altri blocchi, CPT, preset di pagina, preload del font di Fumetto solo con la variation attiva
+- [x] **Fase 5** — CPT builder ("Entity Manager") in `inc/entities/`: pagina admin top-level con cap dedicata `manage_theme_entities`, config in option `glinf_entities` (v2), CPT registrati su `init` e tassonomie come oggetti a sé collegabili a una o più entità (schermata Taxonomies), template archive/single/tassonomia (`register_block_template`, WP ≥ 6.7) e pattern card generati dalla config. Verificata dall'utente in WordPress (entità, tassonomie specifiche/condivise e gerarchiche, archivi dei termini con le variation, permessi). Vedi sezione "Entità (CPT builder)"
+- [ ] Fasi successive (da definire dopo conferma): tooling qualità (composer, `phpcs.xml.dist`, `npm run lint` unico), `search.html`, blocco dinamico `glinf/entity-list` per elencare le entità, preset di pagina (Fase 6), preload del font di Fumetto solo con la variation attiva
+
+Da fare/rivalutare (Fase 5, emersi dalla review): (1) `phpcs.xml.dist` con `customSanitizingFunctions` per `glinf_normalize_slug_input` (altrimenti `InputNotSanitized` sulle letture di `$_POST`); (2) il rinomino `tu/call-to-action` → `glinf/call-to-action` invalida i blocchi già salvati (nessuna deprecation, tema non rilasciato); (3) la migrazione config v1→v2 tronca a 20 tassonomie (caso solo teorico, v1 non è mai stata rilasciata); (4) rifiniture: prefisso `': '` di `post-terms` non traducibile, `&mdash;` letto dagli screen reader nelle tabelle admin, conteggi `wp_count_posts`/`wp_count_terms` per riga (solo admin); (5) opzioni possibili per le tassonomie: base dell'URL indipendente dallo slug, Categorie/Tag nativi collegabili alle entità.
 
 Da fare/rivalutare: `npm audit` mostra 12 vulnerabilità nelle sole dipendenze di sviluppo (0 in produzione): rivalutare prima di ogni release. Il blocco `call-to-action` non ha `example` in `block.json` (anteprima vuota nell'inserter).
 

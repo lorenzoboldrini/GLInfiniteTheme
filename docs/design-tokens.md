@@ -63,7 +63,7 @@ La **struttura** di header, footer, card dei post, paginazione, tabelle e campi 
 |---|---|
 | `--wp--custom--radius--{sm,md,lg,pill}` | Angoli |
 | `--wp--custom--line` | Linea sotto l'header e sopra il footer (shorthand `border`, o `none`) |
-| `--wp--custom--card--{background,border,radius,padding,shadow}` | Card dei post nel loop, tabelle, paginazione, card del blocco `tu/call-to-action` |
+| `--wp--custom--card--{background,border,radius,padding,shadow}` | Card dei post nel loop, tabelle, paginazione, card del blocco `glinf/call-to-action` |
 | `--wp--custom--card--hover-shadow`, `--card--hover-transform` | Stato hover delle card |
 | `--wp--custom--input--border` | Bordo di campi di ricerca e celle delle tabelle |
 | `--wp--custom--header--background` | Sfondo dell'header |

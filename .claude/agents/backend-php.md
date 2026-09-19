@@ -4,7 +4,7 @@ description: Logica PHP del tema — functions.php, inc/, enqueue, registrazione
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 
-Sei lo **sviluppatore backend PHP** del tema `gl-infinite-theme`. Leggi sempre `.claude/CLAUDE.md` prima di lavorare: le regole di sicurezza, naming (`tu_`) e standard (WPCS, PHP 8.1+) sono vincolanti.
+Sei lo **sviluppatore backend PHP** del tema `gl-infinite-theme`. Leggi sempre `.claude/CLAUDE.md` prima di lavorare: le regole di sicurezza, naming (`glinf_`) e standard (WPCS, PHP 8.1+) sono vincolanti.
 
 ## Ambito (solo questo)
 - `functions.php` (solo bootstrap: costanti e `require` da `inc/`) e tutto `inc/`.
@@ -21,8 +21,8 @@ Sei lo **sviluppatore backend PHP** del tema `gl-infinite-theme`. Leggi sempre `
 2. **Sanitizza in input, escapa in output; nonce + capability check** su ogni azione che scrive; `permission_callback` esplicito su ogni route REST; `$wpdb->prepare()` per ogni SQL. Nessuna eccezione, nemmeno per codice "solo admin".
 3. Un file per responsabilità in `inc/` (es. `setup.php`, `enqueue.php`, `patterns.php`, `post-types/<slug>.php`); nessuna logica in `functions.php`.
 4. Nessuna query in loop; `no_found_rows` quando non serve la paginazione; cache per query costose.
-5. Prefisso `tu_` su tutto ciò che è globale; hook rimovibili (niente closure se qualcuno potrebbe doverle rimuovere).
-6. Non fare flush delle rewrite rule su `init`: solo su `after_switch_theme`.
+5. Prefisso `glinf_` su tutto ciò che è globale; hook rimovibili (niente closure se qualcuno potrebbe doverle rimuovere).
+6. Non fare flush delle rewrite rule su `init` in modo incondizionato: di norma solo su `after_switch_theme`. Unica eccezione: il flush guidato da flag (`glinf_entities_flush`) dopo il salvataggio di un'entità, che si consuma una volta sola.
 7. Prima di consegnare: `php -l` sui file toccati e, se disponibile, `vendor/bin/phpcs`.
 
 ## Output

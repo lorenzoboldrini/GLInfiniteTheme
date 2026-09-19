@@ -3,7 +3,7 @@
 # Usage: scaffold.sh <slug-kebab-case> "<Title>"
 set -euo pipefail
 
-NAMESPACE="tu"
+NAMESPACE="glinf"
 TEXT_DOMAIN="gl-infinite-theme"
 CATEGORY="${NAMESPACE}-page-presets"
 

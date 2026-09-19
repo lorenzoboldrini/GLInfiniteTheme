@@ -79,7 +79,7 @@ export default function Edit( { attributes, setAttributes } ) {
 			<div { ...blockProps }>
 				<RichText
 					tagName={ `h${ safeTitleLevel }` }
-					className="tu-call-to-action__title"
+					className="glinf-call-to-action__title"
 					value={ title }
 					onChange={ ( nextTitle ) =>
 						setAttributes( { title: nextTitle } )
@@ -91,7 +91,7 @@ export default function Edit( { attributes, setAttributes } ) {
 				/>
 				<RichText
 					tagName="p"
-					className="tu-call-to-action__description"
+					className="glinf-call-to-action__description"
 					value={ description }
 					onChange={ ( nextDescription ) =>
 						setAttributes( { description: nextDescription } )
@@ -109,7 +109,7 @@ export default function Edit( { attributes, setAttributes } ) {
 				/>
 				<RichText
 					tagName="span"
-					className="wp-element-button tu-call-to-action__button"
+					className="wp-element-button glinf-call-to-action__button"
 					value={ buttonText }
 					onChange={ ( nextText ) =>
 						setAttributes( { buttonText: nextText } )

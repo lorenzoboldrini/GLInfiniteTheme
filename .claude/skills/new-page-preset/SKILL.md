@@ -8,7 +8,7 @@ description: Crea un preset di pagina (block pattern PHP in patterns/) che compa
 Un preset di pagina è un **block pattern** in `patterns/<slug>.php`, con header che lo rende disponibile alla creazione di una nuova pagina. Prima di iniziare leggi `.claude/CLAUDE.md` (i18n, a11y).
 
 ## 1. Raccogli i dati (chiedi se mancano)
-- **slug** kebab-case (`landing`, `about`) → pattern `tu/page-<slug>`
+- **slug** kebab-case (`landing`, `about`) → pattern `glinf/page-<slug>`
 - **titolo** leggibile (senza `"`, `\`, `&`, `|`, `'`)
 - **struttura desiderata** (sezioni: hero, feature, testimonianze, CTA, …)
 
@@ -26,7 +26,7 @@ Crea `patterns/page-<slug>.php` con una struttura di partenza (hero + sezione te
 5. Il pattern deve reggere tutte le Style Variations (nessun colore hardcoded).
 
 ## 4. Verifica
-- La categoria `tu-page-presets` deve essere registrata in `inc/patterns.php` con `register_block_pattern_category()`; lo script avvisa se manca.
+- La categoria `glinf-page-presets` deve essere registrata in `inc/patterns.php` con `register_block_pattern_category()`; lo script avvisa se manca.
 - `php -l patterns/page-<slug>.php`.
 - Nell'editor: nuova pagina → il preset compare nel selettore; inseriscilo, salva, ricarica senza "block validation error".
 - Chiedi una revisione ad `accessibility` (heading, contrasto, landmark).

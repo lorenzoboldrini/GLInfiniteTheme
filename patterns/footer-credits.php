@@ -1,7 +1,7 @@
 <?php
 /**
  * Title: Footer credits
- * Slug: tu/footer-credits
+ * Slug: glinf/footer-credits
  * Description: Copyright line used by the footer template part.
  * Inserter: false
  *

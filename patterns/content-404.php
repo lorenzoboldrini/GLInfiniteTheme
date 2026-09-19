@@ -1,7 +1,7 @@
 <?php
 /**
  * Title: 404 content
- * Slug: tu/content-404
+ * Slug: glinf/content-404
  * Description: Content of the 404 template.
  * Inserter: false
  *

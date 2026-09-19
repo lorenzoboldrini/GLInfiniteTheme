@@ -1,6 +1,6 @@
 ---
 name: new-cpt
-description: Crea lo scaffolding di un nuovo Custom Post Type `tu_<nome>` in inc/post-types/ (registrazione, REST, rewrite, flush al cambio tema) con template FSE single/archive opzionali. Usala quando l'utente chiede un nuovo CPT.
+description: Crea lo scaffolding di un nuovo Custom Post Type `glinf_<nome>` in inc/post-types/ (registrazione, REST, rewrite, flush al cambio tema) con template FSE single/archive opzionali. Usala quando l'utente chiede un nuovo CPT.
 ---
 
 # new-cpt
@@ -11,9 +11,9 @@ Genera `inc/post-types/<slug>.php` dai template in `templates/`. Prima di inizia
 I CPT registrati nel **tema** spariscono dall'admin al cambio tema (i contenuti restano nel DB ma non sono più raggiungibili). Per progetti dove i contenuti devono sopravvivere al tema, valuta un plugin companion. Se l'utente vuole procedere col tema, continua.
 
 ## 1. Raccogli i dati (chiedi se mancano)
-- **slug** in minuscolo, `a-z0-9_` (es. `event`) → post type `tu_event` (**max 20 caratteri in totale**, prefisso incluso)
+- **slug** in minuscolo, `a-z0-9_` (es. `event`) → post type `glinf_event` (**max 20 caratteri in totale**, prefisso incluso)
 - **singolare** e **plurale** in inglese (senza `'`, `"`, `\`, `&`, `|`), es. `Event` / `Events`
-- **template FSE**: creare anche `templates/single-tu_<slug>.html` e `templates/archive-tu_<slug>.html`? (default: sì)
+- **template FSE**: creare anche `templates/single-glinf_<slug>.html` e `templates/archive-glinf_<slug>.html`? (default: sì)
 
 ## 2. Esegui lo scaffolding
 ```bash
@@ -29,6 +29,6 @@ Non sovrascrive file esistenti.
 
 ## 4. Verifica
 - `php -l inc/post-types/<slug>.php`
-- Con WP-CLI: `wp post-type list` mostra `tu_<slug>`; poi `wp rewrite flush`.
+- Con WP-CLI: `wp post-type list` mostra `glinf_<slug>`; poi `wp rewrite flush`.
 - Il CPT compare nell'admin, si crea/salva un elemento, `single` e `archive` rispondono 200.
 - Chiedi una revisione a `qa-reviewer`.

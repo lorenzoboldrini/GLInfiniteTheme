@@ -1,7 +1,7 @@
 <?php
 /**
  * Title: Index title
- * Slug: tu/index-title
+ * Slug: glinf/index-title
  * Description: Main heading of the index template.
  * Inserter: false
  *
