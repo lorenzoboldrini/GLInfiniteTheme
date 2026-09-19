@@ -1,0 +1,15 @@
+// Editor-only styles for glinf/slider.
+// The slides are stacked in a column so each one is easy to edit; the
+// carousel behavior (scroll-snap, controls) exists only on the front end.
+.wp-block-glinf-slider {
+
+	.glinf-slider__slides {
+		display: flex;
+		flex-direction: column;
+		gap: var(--wp--preset--spacing--40);
+	}
+
+	.glinf-slider__editor-actions {
+		margin-block-start: var(--wp--preset--spacing--40);
+	}
+}

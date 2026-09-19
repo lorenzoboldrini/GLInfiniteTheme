@@ -5,8 +5,8 @@
   "private": true,
   "license": "GPL-2.0-or-later",
   "scripts": {
-    "start": "wp-scripts start",
-    "build": "wp-scripts build",
+    "start": "wp-scripts start --experimental-modules",
+    "build": "wp-scripts build --experimental-modules",
     "lint:js": "wp-scripts lint-js src",
     "lint:css": "wp-scripts lint-style \"src/**/*.scss\"",
     "format": "wp-scripts format src"
@@ -19,6 +19,7 @@
     "@wordpress/data": "^10.55.0",
     "@wordpress/html-entities": "^4.55.0",
     "@wordpress/i18n": "^6.28.0",
+    "@wordpress/interactivity": "^6.55.0",
     "@wordpress/scripts": "^35.0.0",
     "@wordpress/server-side-render": "^6.31.0"
   }

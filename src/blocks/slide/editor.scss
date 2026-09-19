@@ -1,0 +1,11 @@
+// Editor-only styles for glinf/slide.
+.wp-block-glinf-slide {
+	// Position tag ("Slide 2 of 5"): tells the editor which slide is which.
+	&::before {
+		content: attr(data-glinf-slide-position);
+		display: block;
+		margin-block-end: var(--wp--preset--spacing--30);
+		color: var(--wp--preset--color--muted);
+		font-size: var(--wp--preset--font-size--small);
+	}
+}

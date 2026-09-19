@@ -1,0 +1,167 @@
+// Front-end and editor styles for glinf/slider.
+// Nothing visual is hardcoded: every value comes from theme.json presets
+// (--wp--preset--*) or design tokens (--wp--custom--*).
+// The arrows, the dots and the pause button carry the "wp-element-button"
+// class, so they take the whole look of elements.button from theme.json and
+// of the active Style Variation (Fumetto: thick border and offset shadow,
+// Minimal: plain outline, Dark: pill shape). The slides take the
+// --wp--custom--card--* tokens (see the glinf/slide block).
+// Defaults sit in :where() (zero specificity) so colors, spacing and typography
+// chosen through block supports always win.
+// The number of visible slides comes from --glinf-slider-per-view, set inline
+// by render.php (a validated integer). Below ~600px it is always one.
+
+:where(.wp-block-glinf-slider) {
+	--glinf-slider-gap: var(--wp--preset--spacing--50);
+	// Room around the slides so shadows and focus rings are not clipped by
+	// the scroll container.
+	--glinf-slider-inset: var(--wp--preset--spacing--40);
+}
+
+:where(.glinf-slider__controls) {
+	gap: var(--wp--preset--spacing--30);
+	margin-block-start: var(--wp--preset--spacing--40);
+}
+
+:where(.glinf-slider__dots) {
+	gap: var(--wp--preset--spacing--20);
+}
+
+.wp-block-glinf-slider {
+	// Never wider than its container: the scrolling stays inside the track
+	// (reflow at 320px, no horizontal scroll of the page).
+	min-width: 0;
+	max-width: 100%;
+	--glinf-slider-visible: 1;
+
+	@media (min-width: 600px) {
+		--glinf-slider-visible: var(--glinf-slider-per-view, 1);
+	}
+
+	// The scroll container. Without JS it is the whole carousel: the slides
+	// scroll and snap by touch, trackpad, scrollbar or keyboard.
+	.glinf-slider__track {
+		box-sizing: border-box;
+		display: flex;
+		gap: var(--glinf-slider-gap);
+		padding: var(--glinf-slider-inset);
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		scroll-snap-type: x mandatory;
+		scroll-padding-inline: var(--glinf-slider-inset);
+	}
+
+	// Each slide is a fraction of the track width: N slides and N-1 gaps fill it.
+	.glinf-slider__track > .wp-block-glinf-slide {
+		flex: 0 0 calc((100% - (var(--glinf-slider-visible) - 1) * var(--glinf-slider-gap)) / var(--glinf-slider-visible));
+		scroll-snap-align: start;
+		// One swipe never skips a slide.
+		scroll-snap-stop: always;
+	}
+
+	// The controls are hidden until the view module reveals them: buttons
+	// that would do nothing without JS must not show up.
+	.glinf-slider__controls {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.glinf-slider__dots {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	// Shared by arrows, pause and dots. wp-element-button brings colors,
+	// border, radius, shadow and typography; the padding is reset because
+	// these are icon-only square buttons.
+	.glinf-slider__button,
+	.glinf-slider__dot {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0;
+		line-height: 1;
+		cursor: pointer;
+	}
+
+	.glinf-slider__button {
+		// Touch target: two steps of the spacing scale (48px), not the fluid
+		// presets, which shrink on small screens where fingers need room.
+		inline-size: calc(var(--wp--preset--spacing--50) * 2);
+		block-size: calc(var(--wp--preset--spacing--50) * 2);
+	}
+
+	.glinf-slider__icon {
+		display: block;
+		inline-size: 1.5em;
+		block-size: 1.5em;
+		flex: none;
+	}
+
+	// The arrows point the other way in right-to-left languages.
+	.glinf-slider__icon--arrow:dir(rtl) {
+		transform: scaleX(-1);
+	}
+
+	// One pause/play icon at a time.
+	.glinf-slider__icon--play,
+	.glinf-slider__pause.is-paused .glinf-slider__icon--pause {
+		display: none;
+	}
+
+	.glinf-slider__pause.is-paused .glinf-slider__icon--play {
+		display: block;
+	}
+
+	// Dots: the current one is wider AND filled with the contrast color, so
+	// the state never relies on color alone.
+	.glinf-slider__dot {
+		inline-size: var(--wp--preset--spacing--50);
+		block-size: var(--wp--preset--spacing--50);
+		border-radius: var(--wp--custom--radius--pill);
+	}
+
+	.glinf-slider__dot[aria-current="true"] {
+		inline-size: calc(var(--wp--preset--spacing--50) * 2);
+		border-color: var(--wp--preset--color--contrast);
+		background: var(--wp--preset--color--contrast);
+		color: var(--wp--preset--color--base);
+	}
+
+	// A disabled arrow is dimmed and does not react to the pointer. The
+	// native "disabled" also keeps it out of the tab order.
+	.glinf-slider__button:disabled {
+		opacity: 0.5;
+		cursor: default;
+		pointer-events: none;
+		transform: none;
+	}
+
+	// Must come last: the display rules above would otherwise win over the
+	// browser default for [hidden].
+	[hidden] {
+		display: none;
+	}
+
+	// Global styles already shorten transitions; this keeps the block safe
+	// when used alone.
+	@media (prefers-reduced-motion: reduce) {
+
+		.glinf-slider__button,
+		.glinf-slider__dot {
+			transition: none;
+		}
+
+		.glinf-slider__button:hover,
+		.glinf-slider__button:active {
+			transform: none;
+		}
+	}
+}

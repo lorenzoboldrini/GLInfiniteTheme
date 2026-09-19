@@ -1,0 +1,26 @@
+// Front-end and editor styles for glinf/slide.
+// Nothing visual is hardcoded: the slide reuses the --wp--custom--card--*
+// tokens of the core/post-template card, of glinf/cpt-grid and of glinf/card,
+// so each Style Variation restyles it with no change here: Fumetto gets a
+// thick border and an offset shadow, Minimal a plain outline. With the base
+// tokens (no border, no padding, transparent background) the slide is just
+// its content.
+// Defaults sit in :where() (zero specificity) so colors, spacing, border and
+// shadow chosen through block supports (inline styles) always win.
+// The scroll-snap sizing of a slide lives in the glinf/slider styles.
+
+:where(.wp-block-glinf-slide) {
+	border: var(--wp--custom--card--border, none);
+	border-radius: var(--wp--custom--card--radius, 0);
+	padding: var(--wp--custom--card--padding, 0);
+	box-shadow: var(--wp--custom--card--shadow, none);
+	background: var(--wp--custom--card--background, transparent);
+}
+
+.wp-block-glinf-slide {
+	// Padding and border are part of the width the slider gives the slide.
+	box-sizing: border-box;
+	// Lets the slide shrink inside the flex track (reflow at 320px).
+	min-width: 0;
+	overflow-wrap: break-word;
+}

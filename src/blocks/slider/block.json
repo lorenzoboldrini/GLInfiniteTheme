@@ -1,0 +1,94 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "glinf/slider",
+	"version": "0.1.0",
+	"title": "Slider",
+	"category": "design",
+	"icon": "images-alt2",
+	"description": "An accessible carousel of free-form slides, scrollable by touch, keyboard, arrows and dots. Optional autoplay never starts by default. The look follows the active Style Variation.",
+	"keywords": [ "slider", "carousel", "slideshow", "slides", "gallery" ],
+	"textdomain": "gl-infinite-theme",
+	"attributes": {
+		"slidesPerView": {
+			"type": "integer",
+			"minimum": 1,
+			"maximum": 4,
+			"default": 1
+		},
+		"loop": {
+			"type": "boolean",
+			"default": false
+		},
+		"showArrows": {
+			"type": "boolean",
+			"default": true
+		},
+		"showDots": {
+			"type": "boolean",
+			"default": true
+		},
+		"autoplay": {
+			"type": "boolean",
+			"default": false
+		},
+		"autoplayDelay": {
+			"type": "integer",
+			"minimum": 3,
+			"maximum": 20,
+			"default": 6
+		},
+		"ariaLabel": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"example": {
+		"innerBlocks": [
+			{
+				"name": "glinf/slide",
+				"innerBlocks": [
+					{
+						"name": "core/paragraph",
+						"attributes": {
+							"content": "First slide: any blocks can go here."
+						}
+					}
+				]
+			},
+			{
+				"name": "glinf/slide",
+				"innerBlocks": [
+					{
+						"name": "core/paragraph",
+						"attributes": {
+							"content": "Second slide."
+						}
+					}
+				]
+			}
+		]
+	},
+	"supports": {
+		"html": false,
+		"anchor": true,
+		"align": [ "wide", "full" ],
+		"color": {
+			"background": true,
+			"text": true
+		},
+		"spacing": {
+			"margin": true,
+			"padding": true
+		},
+		"typography": {
+			"fontSize": true
+		},
+		"interactivity": true
+	},
+	"render": "file:./render.php",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css",
+	"viewScriptModule": "file:./view.js"
+}
