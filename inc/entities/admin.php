@@ -128,7 +128,7 @@ function glinf_entities_redirect( array $args = array() ): never {
  * @return array<string, array{type: string, text: string}>
  */
 function glinf_entities_get_messages(): array {
-	return array(
+	$messages = array(
 		'saved'             => array(
 			'type' => 'success',
 			'text' => __( 'Entity saved.', 'gl-infinite-theme' ),
@@ -178,6 +178,106 @@ function glinf_entities_get_messages(): array {
 			'text' => __( 'The entity could not be saved. Please try again.', 'gl-infinite-theme' ),
 		),
 	);
+
+	return $messages + glinf_entities_get_url_base_messages();
+}
+
+/**
+ * Returns the messages about the URL base, shared by the Entities and Taxonomies screens.
+ *
+ * Both screens validate the same field with the same rules, so the codes and
+ * texts live in one place and are merged into each screen's whitelist.
+ *
+ * @return array<string, array{type: string, text: string}>
+ */
+function glinf_entities_get_url_base_messages(): array {
+	return array(
+		'url_base_invalid'  => array(
+			'type' => 'error',
+			'text' => sprintf(
+				/* translators: %d: maximum length of a URL base. */
+				__( 'The URL base must be a single segment of up to %d characters, with lowercase letters, numbers and hyphens only. It must start and end with a letter or a number and contain at least one letter.', 'gl-infinite-theme' ),
+				GLINF_URL_BASE_MAX
+			),
+		),
+		'url_base_reserved' => array(
+			'type' => 'error',
+			'text' => __( 'This URL base is reserved by WordPress. Please choose another one.', 'gl-infinite-theme' ),
+		),
+		'url_base_exists'   => array(
+			'type' => 'error',
+			'text' => __( 'This URL base is already used by another entity or taxonomy. Please choose another one.', 'gl-infinite-theme' ),
+		),
+		'url_base_conflict' => array(
+			'type' => 'error',
+			'text' => __( 'This URL base conflicts with an existing content type, taxonomy, page or post. Please choose another one.', 'gl-infinite-theme' ),
+		),
+	);
+}
+
+/**
+ * Renders the "URL base" row of the add/edit form, for entities and taxonomies.
+ *
+ * The slug is immutable, the URL base is not: this is the only field that
+ * changes public addresses after creation. When editing, the row shows the
+ * current address and a warning that old links stop working (no redirect is
+ * created). Everything printed is escaped at the point of output.
+ *
+ * @param string               $kind    "entity" or "taxonomy".
+ * @param array<string, mixed> $item    Entity or taxonomy to show (sanitized).
+ * @param bool                 $is_edit True when editing an existing item.
+ * @return void
+ */
+function glinf_entities_render_url_base_row( string $kind, array $item, bool $is_edit ): void {
+	$is_taxonomy = 'taxonomy' === $kind;
+	$field_id    = 'glinf-' . $kind . '-url-base';
+	$field_name  = $is_taxonomy ? 'glinf_taxonomy[url_base]' : 'glinf_entity[url_base]';
+	$default     = glinf_default_url_base( $item['slug'] );
+	$placeholder = '' !== $default ? $default : __( 'Same as the slug', 'gl-infinite-theme' );
+
+	// The address that is live now comes from storage, not from what was typed in a form that failed.
+	$saved       = $is_edit ? ( $is_taxonomy ? glinf_get_taxonomy( $item['slug'] ) : glinf_get_entity( $item['slug'] ) ) : null;
+	$current_url = null === $saved ? '' : home_url( '/' . glinf_entity_url_base( $saved ) . '/' );
+
+	if ( $is_taxonomy ) {
+		$warning = __( 'Changing the URL base breaks every existing link to the term archives of this taxonomy: the old addresses stop working and no redirect is created. Update the menus, links and bookmarks that point to them.', 'gl-infinite-theme' );
+	} else {
+		$warning = __( 'Changing the URL base breaks every existing link to the archive and to the items of this entity: the old addresses stop working and no redirect is created. Update the menus, links and bookmarks that point to them.', 'gl-infinite-theme' );
+	}
+	?>
+	<tr>
+		<th scope="row"><label for="<?php echo esc_attr( $field_id ); ?>"><?php esc_html_e( 'URL base', 'gl-infinite-theme' ); ?></label></th>
+		<td>
+			<input type="text" id="<?php echo esc_attr( $field_id ); ?>" name="<?php echo esc_attr( $field_name ); ?>" value="<?php echo esc_attr( $item['url_base'] ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" class="regular-text code" maxlength="<?php echo esc_attr( (string) GLINF_URL_BASE_MAX ); ?>" pattern="(?=[^a-z]*[a-z])[a-z0-9]([a-z0-9\-]*[a-z0-9])?" autocapitalize="none" autocomplete="off" spellcheck="false" aria-describedby="<?php echo esc_attr( $field_id . '-desc' . ( $is_edit ? ' ' . $field_id . '-warning' : '' ) ); ?>">
+			<p class="description" id="<?php echo esc_attr( $field_id . '-desc' ); ?>">
+				<?php
+				printf(
+					/* translators: %d: maximum length of a URL base. */
+					esc_html__( 'The first part of the address, a single segment of up to %d characters: lowercase letters, numbers and hyphens, with at least one letter. Leave it empty to use the slug, with underscores turned into hyphens.', 'gl-infinite-theme' ),
+					(int) GLINF_URL_BASE_MAX
+				);
+				if ( '' !== $current_url ) {
+					echo ' ';
+					echo wp_kses(
+						sprintf(
+							/* translators: %s: current address, wrapped in a code element. */
+							__( 'Current address: %s', 'gl-infinite-theme' ),
+							'<code>' . esc_html( $current_url ) . '</code>'
+						),
+						array( 'code' => array() )
+					);
+				}
+				?>
+			</p>
+			<?php if ( $is_edit ) : ?>
+				<p class="description" id="<?php echo esc_attr( $field_id . '-warning' ); ?>">
+					<strong><?php esc_html_e( 'Warning:', 'gl-infinite-theme' ); ?></strong>
+					<?php echo esc_html( $warning ); ?>
+				</p>
+			<?php endif; ?>
+		</td>
+	</tr>
+	<?php
 }
 
 /**
@@ -573,12 +673,13 @@ function glinf_render_entity_form( array $entity, bool $is_edit, string $notice_
 							if ( $is_edit ) {
 								esc_html_e( 'The slug cannot be changed after creation.', 'gl-infinite-theme' );
 							} else {
-								esc_html_e( '3 to 14 characters: lowercase letters, numbers and underscores, starting with a letter. It is used in the address of the archive and cannot be changed later.', 'gl-infinite-theme' );
+								esc_html_e( '3 to 14 characters: lowercase letters, numbers and underscores, starting with a letter. It cannot be changed later. By default it is also used in the address of the archive (underscores become hyphens): see URL base.', 'gl-infinite-theme' );
 							}
 							?>
 						</p>
 					</td>
 				</tr>
+				<?php glinf_entities_render_url_base_row( 'entity', $entity, $is_edit ); ?>
 				<tr>
 					<th scope="row"><label for="glinf-entity-singular"><?php esc_html_e( 'Singular name', 'gl-infinite-theme' ); ?></label></th>
 					<td>
@@ -661,6 +762,9 @@ function glinf_render_entity_form( array $entity, bool $is_edit, string $notice_
  * the entity is identified by the hidden original slug and the slug is
  * immutable, as it is what ties the saved content to the post type.
  * The taxonomies are left as they are: they are edited on their own screen.
+ * The URL base, unlike the slug, can change on update: it is validated against
+ * the rest of the configuration and the site (see glinf_validate_url_base()); the
+ * flag that flushes the rewrite rules is set by glinf_save_config() when it changes.
  *
  * @return void
  */
@@ -696,6 +800,9 @@ function glinf_handle_save_entity(): void {
 	}
 	if ( '' === $error ) {
 		$error = glinf_validate_entity_fields( $entity );
+	}
+	if ( '' === $error ) {
+		$error = glinf_validate_entity_url_base( $entity, $items, $config['taxonomies'] );
 	}
 
 	if ( '' !== $error ) {

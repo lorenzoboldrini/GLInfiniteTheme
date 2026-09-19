@@ -58,6 +58,40 @@ Sono il **ripiego** per tutto ciò che non ha un template più specifico. Non si
 
 Le tassonomie registrate dalle entità hanno `taxonomy-glinf_<slug>` e non passano dal generico.
 
+## Entità: la base dell'URL (`url_base`)
+
+Riguarda `inc/entities/config.php` (dati e validazione), `register.php` (registrazione) e `admin.php` / `admin-taxonomies.php` (campo nel modulo). Le decisioni di progetto sono in `.claude/CLAUDE.md`, sezione "Entità (CPT builder)".
+
+### Dove sta
+
+Ogni entità e ogni tassonomia della option `glinf_entities` ha una chiave opzionale `url_base` (stringa). È il segmento unico dell'indirizzo: archivio `/<base>/`, singoli `/<base>/<post>/`, termini `/<base>/<termine>/`. Lo slug interno, il post type e la chiave della tassonomia (`glinf_<slug>`) e i template (`single-glinf_<slug>` ecc.) **non** dipendono da essa.
+
+| Funzione | Cosa fa |
+|---|---|
+| `glinf_default_url_base( $slug )` | Base derivata dallo slug (`_` diventa `-`) |
+| `glinf_entity_url_base( $entity )` / `glinf_taxonomy_url_base( $taxonomy )` | Base **effettiva**: `url_base` se non vuoto, altrimenti la derivata. Usate da `register.php` per `rewrite.slug` |
+| `glinf_is_valid_url_base_format( $base )` | Formato: `[a-z0-9-]`, inizia e finisce con lettera o cifra, almeno una lettera, max `GLINF_URL_BASE_MAX` (40) |
+| `glinf_normalize_url_base_input( $value, $slug )` | Stessa pipeline degli slug (`sanitize_text_field`, trim, minuscolo; niente riparazioni). Un valore uguale alla base derivata diventa `''` |
+| `glinf_validate_url_base( $kind, $slug, $url_base, $items, $taxonomies )` | Restituisce `''` oppure un codice: `url_base_invalid`, `url_base_reserved`, `url_base_exists`, `url_base_conflict` |
+
+### Niente migrazione, versione invariata
+
+`GLINF_ENTITIES_VERSION` resta 2. La chiave è additiva e, se manca, vale `''` (base derivata dallo slug): è esattamente il comportamento di prima, quindi le configurazioni già salvate producono gli stessi indirizzi (`/giocatore/`, `/alunno/`) senza toccare nulla. La chiave compare nella option al primo salvataggio successivo. Il normalizzatore non scarta mai un'entità per un `url_base` sbagliato: lo riporta a `''` (formato non valido, parola riservata, già preso da un elemento precedente); i gestori non salvano mai un valore del genere, la difesa serve solo contro una option manomessa.
+
+### Come si valida
+
+Il controllo avviene nei gestori dopo `glinf_validate_*_fields()` e vale sia in creazione sia in modifica. Si valida la base **effettiva**, quindi anche il campo vuoto (base derivata dallo slug) passa dagli stessi controlli. Ordine: formato (solo se digitato) → parola riservata, confrontata dopo la normalizzazione trattini/underscore come per gli slug (`glinf_reserved_entity_slugs`) → base già usata da un'altra entità o tassonomia della configurazione, **incluse le tassonomie non collegate** (non registrate, quindi invisibili al controllo sulle rotte) → rotte registrate e pagine/articoli con lo stesso path (`glinf_url_base_collides_with_site()`, estratta da `glinf_validate_new_slug()`, che ora controlla solo formato, riservate, unicità e chiave).
+
+Se la base effettiva **non cambia** rispetto a quella salvata, la validazione non fa nulla: un'entità esistente resta modificabile anche se nel frattempo una pagina ha preso il suo path o un plugin ha riservato la parola.
+
+### Perché non c'è un redirect dai vecchi indirizzi
+
+Decisione di progetto: il tema non salva la cronologia delle basi né registra redirect (servirebbero una lista per elemento, regole di rewrite aggiuntive e una politica di scadenza, e un redirect 301 sbagliato è difficile da annullare per i motori di ricerca). Il modulo avvisa in modo esplicito che i vecchi link smettono di funzionare. Chi ha bisogno di redirect può usarli lato server o con un plugin dedicato.
+
+### Flush delle rewrite
+
+Nessun flush aggiuntivo. `glinf_save_config()` normalizza e scrive l'option; se il valore cambia (e cambiare `url_base` lo cambia) imposta il flag `glinf_entities_flush`, e `wp_loaded` della richiesta successiva (il redirect dopo il salvataggio) lo consuma con `flush_rewrite_rules( false )`, quando `init` ha già registrato con la nuova base. Se non cambia nulla il flag non viene impostato.
+
 ## Versione minima di WordPress: 6.7
 
 Il tema dichiara `Requires at least: 6.7` perché `register_block_template()`, con cui si registrano i template di entità e tassonomie, esiste solo da 6.7. `glinf_register_entity_templates()` la chiama direttamente, senza controllare che esista.

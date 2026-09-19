@@ -143,7 +143,8 @@ Come esempio creiamo l'entità **Progetto**.
 
    | Campo | Cosa scrivere | Esempio |
    |---|---|---|
-   | **Slug** | L'"identificativo" dell'entità: da 3 a 14 caratteri, solo **lettere minuscole, numeri e trattino basso**, deve **iniziare con una lettera** e non può finire con il trattino basso. Compare nell'indirizzo dell'elenco. | `progetto` |
+   | **Slug** | L'"identificativo" dell'entità: da 3 a 14 caratteri, solo **lettere minuscole, numeri e trattino basso**, deve **iniziare con una lettera** e non può finire con il trattino basso. Se non scegli altro, compare nell'indirizzo dell'elenco. | `progetto` |
+   | **URL base** | *Facoltativo.* La prima parte dell'indirizzo dell'elenco e dei contenuti (`iltuosito.it/`**`progetti`**`/`), che puoi scegliere **indipendentemente dallo slug**. Vedi "Cambiare l'indirizzo" sotto. Se lo lasci vuoto usa lo slug. | `progetti` |
    | **Singular name** | Il nome al singolare | `Progetto` |
    | **Plural name** | Il nome al plurale | `Progetti` |
    | **Menu icon** | L'icona del menu, scelta da una lista | *Portfolio* |
@@ -156,6 +157,19 @@ Come esempio creiamo l'entità **Progetto**.
 Nel modulo, sotto ai campi, vedi la riga **Taxonomies**: è solo informativa e mostra le tassonomie già collegate all'entità (all'inizio *None yet*). Per collegarne una usa il link **Manage taxonomies**, come spiegato al punto 3.
 
 > **Attenzione allo slug.** Una volta creata l'entità, lo **slug non si può più cambiare**. Serve a collegare i contenuti all'entità: cambiarlo li farebbe "perdere". Scegli con calma. Se lo slug è già usato (da un'altra entità, da una pagina con lo stesso indirizzo, da una parola riservata di WordPress come `post`, `page`, `category`…) vedrai un messaggio che ti chiede di sceglierne un altro.
+
+### Cambiare l'indirizzo (URL base)
+
+Lo slug è fisso, ma la parte iniziale dell'indirizzo pubblico si può scegliere e **cambiare in qualsiasi momento** dal campo **URL base**. Esempio: l'entità con slug `progetto` può avere l'elenco su `iltuosito.it/portfolio/` e i contenuti su `iltuosito.it/portfolio/nome-del-progetto/`.
+
+- **Come si scrive**: un solo pezzo, fino a 40 caratteri, con **lettere minuscole, numeri e trattini**. Deve iniziare e finire con una lettera o un numero e contenere **almeno una lettera** (un indirizzo fatto di soli numeri, come `2024`, si confonderebbe con gli archivi per data). Niente spazi, niente `/`, niente accenti.
+- **Se lo lasci vuoto**: usa lo slug, con il trattino basso trasformato in trattino (`mio_progetto` → `mio-progetto`). Il campo mostra questo valore in grigio.
+- **Sotto il campo** vedi l'**indirizzo attuale** del sito, per capire subito cosa cambierà.
+- **Non può coincidere** con l'indirizzo di un'altra entità o tassonomia, con una parola riservata di WordPress (`page`, `category`, `wp-admin`…) né con una pagina o un articolo esistente: in quel caso, al salvataggio, vedi un messaggio che ti chiede di sceglierne un altro e il modulo resta compilato.
+
+> **Attenzione: i vecchi link smettono di funzionare.** Se cambi l'URL base di un'entità già pubblicata, i vecchi indirizzi (per esempio `iltuosito.it/progetto/…`) daranno **"pagina non trovata"**: **il tema non crea nessun reindirizzamento**. Lo stesso vale per i link salvati dai visitatori e per la posizione sui motori di ricerca. Dopo il cambio aggiorna i menu, i pulsanti e i link nelle pagine che puntavano ai vecchi indirizzi. L'avviso compare anche nel modulo, ogni volta che modifichi un'entità esistente.
+
+Dopo il salvataggio non serve fare altro: gli indirizzi si aggiornano da soli.
 
 ### Le "Features": cosa può avere ogni elemento
 Spunta solo ciò che ti serve (serve almeno una voce):
@@ -187,7 +201,8 @@ Come esempio creiamo **Settore** per i Progetti.
 
    | Campo | Cosa scrivere | Esempio |
    |---|---|---|
-   | **Slug** | L'identificativo: da 3 a 26 caratteri, solo **lettere minuscole, numeri e trattino basso**, deve **iniziare con una lettera** e non può finire con il trattino basso. Compare nell'indirizzo dei termini (il trattino basso diventa trattino). | `settore` |
+   | **Slug** | L'identificativo: da 3 a 26 caratteri, solo **lettere minuscole, numeri e trattino basso**, deve **iniziare con una lettera** e non può finire con il trattino basso. Se non scegli altro, compare nell'indirizzo dei termini (il trattino basso diventa trattino). | `settore` |
+   | **URL base** | *Facoltativo.* La prima parte dell'indirizzo dei termini (`iltuosito.it/`**`settori`**`/web/`), indipendente dallo slug e modificabile in ogni momento. Stesse regole e stesso avviso delle entità (vedi "Cambiare l'indirizzo" al punto 2). Vuoto = usa lo slug. | `settori` |
    | **Singular name** | Il nome al singolare | `Settore` |
    | **Plural name** | Il nome al plurale | `Settori` |
    | **Structure** | **Hierarchical (like categories)** è **spuntata di default**: ogni termine può avere un **padre**, scelto da un elenco (vedi sotto). Toglila solo se vuoi semplici etichette piatte, come i tag. | spuntata |
@@ -231,7 +246,7 @@ Puoi cambiare l'aspetto di queste pagine, come spiegato al punto 5.
 ### Modificare o eliminare una tassonomia
 Nell'elenco **Taxonomies** vedi per ogni riga il **Type** (*Specific*, *Shared* o *Not attached*) e le entità collegate.
 
-- **Edit**: puoi cambiare nomi, struttura e **entità collegate**. Togliere la spunta a un'entità **scollega** la tassonomia da quella entità: i termini restano salvati. **Non** puoi cambiare lo slug.
+- **Edit**: puoi cambiare nomi, struttura e **entità collegate**. Togliere la spunta a un'entità **scollega** la tassonomia da quella entità: i termini restano salvati. **Non** puoi cambiare lo slug. Puoi invece cambiare l'**URL base**: attenzione, i vecchi indirizzi dei termini (per esempio `iltuosito.it/settore/web/`) non funzioneranno più e **non c'è nessun reindirizzamento**. L'avviso compare nel modulo.
 - **Delete**: compare una richiesta di conferma. Viene cancellata **solo la configurazione**: termini e assegnazioni restano nel database e riappaiono se ricrei una tassonomia con **lo stesso slug**.
 
 ---
@@ -265,7 +280,7 @@ La **card** è un *pattern* (un blocco pronto da inserire). Per usarla in una tu
 
 Vai in **Entity Manager**: per ogni riga trovi **Edit** e **Delete**. La colonna **Content** mostra quanti contenuti ci sono; cliccando il numero li vedi.
 
-- **Edit** (*Modifica*): puoi cambiare nomi, icona, features e archivio. **Non** puoi cambiare lo slug. Clicca **Update Entity** per salvare. Le tassonomie si collegano dalla schermata **Taxonomies**.
+- **Edit** (*Modifica*): puoi cambiare nomi, icona, features, archivio e **URL base**. **Non** puoi cambiare lo slug. Se cambi l'URL base, i vecchi indirizzi smettono di funzionare senza reindirizzamento (vedi "Cambiare l'indirizzo" al punto 2). Clicca **Update Entity** per salvare. Le tassonomie si collegano dalla schermata **Taxonomies**.
 - **Delete** (*Elimina*): compare una richiesta di conferma. Viene cancellata **solo la configurazione**: i **contenuti non vengono cancellati** e restano nel database. Se in futuro crei di nuovo un'entità con **lo stesso slug**, i vecchi contenuti riappaiono. Le **tassonomie** collegate restano, semplicemente **scollegate** da quell'entità.
 
 Ricorda: tolta una feature (per esempio l'immagine in evidenza) non sparisce il dato già salvato, semplicemente non viene più mostrato.
@@ -289,7 +304,7 @@ Per togliere il permesso, togli la spunta. **Sul proprio profilo** la casella è
 ## 8. Limiti da conoscere
 
 - **Massimo 20 entità** e **20 tassonomie** in totale. Non c'è un limite di tassonomie per singola entità.
-- **Lo slug non si cambia** dopo la creazione, né per le entità (da 3 a 14 caratteri) né per le tassonomie (da 3 a 26).
+- **Lo slug non si cambia** dopo la creazione, né per le entità (da 3 a 14 caratteri) né per le tassonomie (da 3 a 26). L'**URL base** invece sì, ma senza reindirizzamento dai vecchi indirizzi.
 - **Categorie e tag di WordPress** restano degli Articoli: non si possono collegare alle entità (per ora).
 - **Se cambi tema** le entità spariscono dalla bacheca e dal sito (i contenuti restano nel database). Tornando a questo tema riappaiono come prima. Se i contenuti devono sopravvivere a un cambio di tema, chiedi a chi gestisce il sito di valutare un plugin apposito.
 
@@ -308,6 +323,15 @@ Controlla che l'entità abbia **Featured image** ed **Excerpt** tra le Features 
 
 **Posso rinominare un'entità o una tassonomia?**
 Sì, i nomi (singolare e plurale) si cambiano quando vuoi. Solo lo slug è fisso.
+
+**Voglio un indirizzo diverso dallo slug (per esempio `/portfolio/` invece di `/progetto/`).**
+Modifica l'entità (o la tassonomia) e scrivi il nuovo valore nel campo **URL base**. Ricorda che i vecchi link non vengono reindirizzati.
+
+**Ho cambiato l'URL base e i vecchi link danno "pagina non trovata".**
+È normale: il tema non crea reindirizzamenti. Aggiorna i link che puntano ai vecchi indirizzi. Se vuoi tornare indietro, rimetti il vecchio valore (o svuota il campo, se il vecchio indirizzo era quello dello slug).
+
+**Il nuovo indirizzo dà "pagina non trovata".**
+Di norma si aggiorna da solo dopo il salvataggio. Se non succede, vai in *Impostazioni → Permalink* e clicca **Salva le modifiche**.
 
 **Ho scollegato una tassonomia da tutte le entità e i termini sono spariti dal sito.**
 È normale: una tassonomia *Not attached* non viene usata. I termini non sono stati cancellati: ricollegando la tassonomia a un'entità (**Taxonomies → Edit → Attach to**) riappaiono.

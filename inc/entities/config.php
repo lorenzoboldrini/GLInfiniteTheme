@@ -25,6 +25,7 @@
  *                 'icon'        => string,   // whitelisted dashicon
  *                 'supports'    => string[], // whitelisted post type features
  *                 'has_archive' => bool,
+ *                 'url_base'    => string,   // optional, '' or absent = derived from the slug (see glinf_default_url_base())
  *             ),
  *         ),
  *         'taxonomies' => array(
@@ -34,9 +35,15 @@
  *                 'plural'       => string,   // 1-40 chars
  *                 'hierarchical' => bool,
  *                 'entities'     => string[], // slugs of existing entities
+ *                 'url_base'     => string,   // optional, '' or absent = derived from the slug
  *             ),
  *         ),
  *     )
+ *
+ * `url_base` is the single URL segment of the archive, the single items and the
+ * term archives. It is independent of the slug (which is immutable): the config
+ * stays version 2 because the key is purely additive (absent = the base derived
+ * from the slug, exactly the behaviour before the key existed).
  *
  * Version 1 stored the taxonomies inside each entity: it is migrated on read
  * (see glinf_migrate_v1_config()) and written back as version 2 on the next save.
@@ -89,6 +96,16 @@ const GLINF_ENTITY_SLUG_REGEX = '/^[a-z][a-z0-9_]{1,12}[a-z0-9]\z/';
  */
 const GLINF_TAXONOMY_SLUG_REGEX = '/^[a-z][a-z0-9_]{1,24}[a-z0-9]\z/';
 
+/** Maximum length of a URL base (a single URL segment). */
+const GLINF_URL_BASE_MAX = 40;
+
+/**
+ * URL base format: lowercase letters, numbers and hyphens, starting and ending with
+ * a letter or a number, with at least one letter (an all-numeric segment such as
+ * "2024" would shadow the date archives). The length limit is checked apart.
+ */
+const GLINF_URL_BASE_REGEX = '/^(?=[^a-z]*[a-z])[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\z/';
+
 /** Icon used when none (or an invalid one) is chosen. */
 const GLINF_ENTITY_DEFAULT_ICON = 'dashicons-admin-post';
 
@@ -103,13 +120,35 @@ function glinf_entity_post_type( string $slug ): string {
 }
 
 /**
- * Returns the archive/single URL segment of an entity.
+ * Returns the URL base an entity or a taxonomy gets when none is set.
  *
- * @param string $slug Entity slug.
+ * It is the slug with underscores turned into hyphens.
+ *
+ * @param string $slug Entity or taxonomy slug.
  * @return string
  */
-function glinf_entity_rewrite_slug( string $slug ): string {
+function glinf_default_url_base( string $slug ): string {
 	return str_replace( '_', '-', $slug );
+}
+
+/**
+ * Returns the URL segment of an entity (archive and single items).
+ *
+ * The explicit `url_base` wins; an empty or missing one falls back to the base
+ * derived from the slug, so configurations saved before the key existed keep
+ * their addresses.
+ *
+ * @param array<string, mixed> $entity Normalized entity.
+ * @return string
+ */
+function glinf_entity_url_base( array $entity ): string {
+	$base = isset( $entity['url_base'] ) && is_string( $entity['url_base'] ) ? $entity['url_base'] : '';
+
+	if ( '' !== $base ) {
+		return $base;
+	}
+
+	return glinf_default_url_base( isset( $entity['slug'] ) && is_string( $entity['slug'] ) ? $entity['slug'] : '' );
 }
 
 /**
@@ -123,15 +162,15 @@ function glinf_taxonomy_key( string $slug ): string {
 }
 
 /**
- * Returns the term archive URL segment of a taxonomy.
+ * Returns the URL segment of a taxonomy (term archives).
  *
- * Same rule as the entities: the segment is the slug with underscores turned into hyphens.
+ * Same rule as the entities: explicit `url_base`, otherwise derived from the slug.
  *
- * @param string $slug Taxonomy slug.
+ * @param array<string, mixed> $taxonomy Normalized taxonomy.
  * @return string
  */
-function glinf_taxonomy_rewrite_slug( string $slug ): string {
-	return glinf_entity_rewrite_slug( $slug );
+function glinf_taxonomy_url_base( array $taxonomy ): string {
+	return glinf_entity_url_base( $taxonomy );
 }
 
 /**
@@ -402,6 +441,34 @@ function glinf_normalize_slug_input( mixed $value ): string {
 }
 
 /**
+ * Tells whether a string has the shape of a valid URL base.
+ *
+ * @param string $base Candidate URL base (non empty).
+ * @return bool
+ */
+function glinf_is_valid_url_base_format( string $base ): bool {
+	return strlen( $base ) <= GLINF_URL_BASE_MAX && 1 === preg_match( GLINF_URL_BASE_REGEX, $base );
+}
+
+/**
+ * Normalizes an untrusted URL base with the same pipeline as the slugs.
+ *
+ * Like the slug, it is only trimmed and lowercased, never repaired: "Foo/bar"
+ * must be rejected by the validation, not silently turned into something else.
+ * A value equal to the base derived from the slug is stored as '' ("use the
+ * default"), so there is one way to express the default.
+ *
+ * @param mixed  $value Raw value (already unslashed).
+ * @param string $slug  Normalized slug of the entity or taxonomy.
+ * @return string '' means "derived from the slug".
+ */
+function glinf_normalize_url_base_input( mixed $value, string $slug ): string {
+	$base = glinf_normalize_slug_input( $value );
+
+	return glinf_default_url_base( $slug ) === $base ? '' : $base;
+}
+
+/**
  * Tells whether a display name (entity or taxonomy) is acceptable (1 to 40 characters).
  *
  * @param string $name Sanitized name.
@@ -449,13 +516,16 @@ function glinf_sanitize_entity( array $raw ): array {
 		}
 	}
 
+	$slug = glinf_normalize_slug_input( $raw['slug'] ?? '' );
+
 	return array(
-		'slug'        => glinf_normalize_slug_input( $raw['slug'] ?? '' ),
+		'slug'        => $slug,
 		'singular'    => glinf_entity_clean_text( $raw['singular'] ?? '' ),
 		'plural'      => glinf_entity_clean_text( $raw['plural'] ?? '' ),
 		'icon'        => $icon,
 		'supports'    => $supports,
 		'has_archive' => glinf_entity_to_bool( $raw['has_archive'] ?? false ),
+		'url_base'    => glinf_normalize_url_base_input( $raw['url_base'] ?? '', $slug ),
 	);
 }
 
@@ -481,12 +551,15 @@ function glinf_sanitize_taxonomy( array $raw, array $entity_slugs ): array {
 		}
 	}
 
+	$slug = glinf_normalize_slug_input( $raw['slug'] ?? '' );
+
 	return array(
-		'slug'         => glinf_normalize_slug_input( $raw['slug'] ?? '' ),
+		'slug'         => $slug,
 		'singular'     => glinf_entity_clean_text( $raw['singular'] ?? '' ),
 		'plural'       => glinf_entity_clean_text( $raw['plural'] ?? '' ),
 		'hierarchical' => glinf_entity_to_bool( $raw['hierarchical'] ?? false ),
 		'entities'     => $entities,
+		'url_base'     => glinf_normalize_url_base_input( $raw['url_base'] ?? '', $slug ),
 	);
 }
 
@@ -636,6 +709,27 @@ function glinf_migrate_v1_config( array $stored ): array {
 }
 
 /**
+ * Keeps a stored URL base only when it is still acceptable.
+ *
+ * @param string   $url_base Sanitized stored value ('' for "derived from the slug").
+ * @param string[] $reserved Reserved slugs, in the underscore form (see glinf_get_reserved_slugs()).
+ * @param string[] $used     Effective URL bases of the items read so far.
+ * @return string The same value, or '' when it must fall back to the derived base.
+ */
+function glinf_clean_stored_url_base( string $url_base, array $reserved, array $used ): string {
+	if (
+		'' === $url_base
+		|| ! glinf_is_valid_url_base_format( $url_base )
+		|| glinf_is_slug_reserved( str_replace( '-', '_', $url_base ), $reserved )
+		|| in_array( $url_base, $used, true )
+	) {
+		return '';
+	}
+
+	return $url_base;
+}
+
+/**
  * Turns an untrusted stored option value into a clean configuration.
  *
  * Anything invalid is dropped rather than repaired: a broken entry must never
@@ -646,6 +740,11 @@ function glinf_migrate_v1_config( array $stored ): array {
  * Entities are normalized first; taxonomies then keep only the entities that
  * survived and are dropped when their slug equals an entity slug (both would
  * claim the same URL segment).
+ *
+ * A stored `url_base` that is malformed, reserved or already taken by an earlier
+ * item is not repaired: it falls back to the base derived from the slug (the
+ * entry itself is kept, its content must not disappear). The handlers never
+ * save such a value; this only defends against a tampered option.
  *
  * @param mixed $stored Value of the option.
  * @return array{items: array<string, array<string, mixed>>, taxonomies: array<string, array<string, mixed>>}
@@ -665,7 +764,8 @@ function glinf_normalize_stored_config( mixed $stored ): array {
 		$stored = glinf_migrate_v1_config( $stored );
 	}
 
-	$reserved = glinf_get_reserved_slugs();
+	$reserved   = glinf_get_reserved_slugs();
+	$used_bases = array();
 
 	if ( isset( $stored['items'] ) && is_array( $stored['items'] ) ) {
 		foreach ( $stored['items'] as $key => $raw ) {
@@ -688,6 +788,9 @@ function glinf_normalize_stored_config( mixed $stored ): array {
 			) {
 				continue;
 			}
+
+			$entity['url_base'] = glinf_clean_stored_url_base( $entity['url_base'], $reserved, $used_bases );
+			$used_bases[]       = glinf_entity_url_base( $entity );
 
 			$config['items'][ $key ] = $entity;
 		}
@@ -717,6 +820,9 @@ function glinf_normalize_stored_config( mixed $stored ): array {
 			) {
 				continue;
 			}
+
+			$taxonomy['url_base'] = glinf_clean_stored_url_base( $taxonomy['url_base'], $reserved, $used_bases );
+			$used_bases[]         = glinf_taxonomy_url_base( $taxonomy );
 
 			$config['taxonomies'][ $key ] = $taxonomy;
 		}
@@ -858,7 +964,8 @@ function glinf_save_config( array $items, array $taxonomies ): bool {
 /**
  * Returns every URL segment already claimed by a registered post type or taxonomy.
  *
- * Used so that a new entity (or taxonomy) never shadows an existing route.
+ * Used so that a URL base never shadows an existing route. It reads the objects
+ * as registered NOW, so it always reflects the effective base (explicit or derived).
  *
  * @return string[]
  */
@@ -883,12 +990,32 @@ function glinf_get_registered_rewrite_slugs(): array {
 }
 
 /**
+ * Tells whether a URL base is already taken by a registered route or by content.
+ *
+ * True when a registered post type or taxonomy already uses the segment, or when
+ * a page or post has that path: it would be shadowed by (or shadow) the archive.
+ *
+ * @param string $base URL base (single segment, already validated).
+ * @return bool
+ */
+function glinf_url_base_collides_with_site( string $base ): bool {
+	if ( in_array( $base, glinf_get_registered_rewrite_slugs(), true ) ) {
+		return true;
+	}
+
+	return null !== get_page_by_path( $base, OBJECT, array( 'page', 'post' ) );
+}
+
+/**
  * Validates the slug of an entity or taxonomy that is about to be created.
  *
  * Only call this when creating: after creation the slug is immutable. Entities
  * and taxonomies share the URL namespace, so a slug used by one kind is refused
  * for the other too (this includes taxonomies with no entity attached, which are
  * not registered and would otherwise go unnoticed).
+ *
+ * The URL segment is NOT checked here: it depends on the URL base, which may be
+ * set independently of the slug (see glinf_validate_url_base()).
  *
  * @param string                              $slug       Normalized slug (see glinf_normalize_slug_input()).
  * @param string                              $kind       "entity" or "taxonomy".
@@ -916,18 +1043,94 @@ function glinf_validate_new_slug( string $slug, string $kind, array $items, arra
 		return 'slug_conflict';
 	}
 
-	$rewrite_slug = glinf_entity_rewrite_slug( $slug );
+	return '';
+}
 
-	if ( in_array( $rewrite_slug, glinf_get_registered_rewrite_slugs(), true ) ) {
-		return 'slug_conflict';
+/**
+ * Validates the URL base of an entity or taxonomy, on creation and on update.
+ *
+ * The EFFECTIVE base is checked, so an empty field (base derived from the slug)
+ * goes through the same rules as a typed one. Order: format (typed values only),
+ * reserved words, another entity or taxonomy of the configuration (the item
+ * itself is excluded), then registered routes and existing pages or posts.
+ *
+ * When the effective base is the one the item already has, nothing is checked:
+ * an existing entity must stay editable even if, later, a page took its path or
+ * a plugin reserved the word. The item is looked up by kind and slug, so a
+ * creation (slug not saved yet) checks everything.
+ *
+ * @param string                              $kind       "entity" or "taxonomy".
+ * @param string                              $slug       Normalized slug of the item.
+ * @param string                              $url_base   Sanitized URL base ('' for "derived from the slug").
+ * @param array<string, array<string, mixed>> $items      Currently saved entities.
+ * @param array<string, array<string, mixed>> $taxonomies Currently saved taxonomies.
+ * @return string Empty string when valid, otherwise an error code.
+ */
+function glinf_validate_url_base( string $kind, string $slug, string $url_base, array $items, array $taxonomies ): string {
+	$is_taxonomy = 'taxonomy' === $kind;
+
+	if ( '' !== $url_base && ! glinf_is_valid_url_base_format( $url_base ) ) {
+		return 'url_base_invalid';
 	}
 
-	// A page or post with the same path would be shadowed by (or shadow) the archive.
-	if ( null !== get_page_by_path( $rewrite_slug, OBJECT, array( 'page', 'post' ) ) ) {
-		return 'slug_conflict';
+	$effective = '' !== $url_base ? $url_base : glinf_default_url_base( $slug );
+	$saved     = $is_taxonomy ? ( $taxonomies[ $slug ] ?? null ) : ( $items[ $slug ] ?? null );
+
+	if ( null !== $saved && glinf_entity_url_base( $saved ) === $effective ) {
+		return '';
+	}
+
+	// Hyphens and underscores are equivalent in the reserved list.
+	if ( glinf_is_slug_reserved( str_replace( '-', '_', $effective ) ) ) {
+		return 'url_base_reserved';
+	}
+
+	$groups = array(
+		'entity'   => $items,
+		'taxonomy' => $taxonomies,
+	);
+
+	foreach ( $groups as $other_kind => $group ) {
+		foreach ( $group as $other_slug => $other ) {
+			if ( $other_kind === $kind && (string) $other_slug === $slug ) {
+				continue;
+			}
+
+			if ( glinf_entity_url_base( $other ) === $effective ) {
+				return 'url_base_exists';
+			}
+		}
+	}
+
+	if ( glinf_url_base_collides_with_site( $effective ) ) {
+		return 'url_base_conflict';
 	}
 
 	return '';
+}
+
+/**
+ * Validates the URL base of a sanitized entity.
+ *
+ * @param array<string, mixed>                $entity     Output of glinf_sanitize_entity().
+ * @param array<string, array<string, mixed>> $items      Currently saved entities.
+ * @param array<string, array<string, mixed>> $taxonomies Currently saved taxonomies.
+ * @return string Empty string when valid, otherwise an error code.
+ */
+function glinf_validate_entity_url_base( array $entity, array $items, array $taxonomies ): string {
+	return glinf_validate_url_base( 'entity', $entity['slug'], $entity['url_base'], $items, $taxonomies );
+}
+
+/**
+ * Validates the URL base of a sanitized taxonomy.
+ *
+ * @param array<string, mixed>                $taxonomy   Output of glinf_sanitize_taxonomy().
+ * @param array<string, array<string, mixed>> $items      Currently saved entities.
+ * @param array<string, array<string, mixed>> $taxonomies Currently saved taxonomies.
+ * @return string Empty string when valid, otherwise an error code.
+ */
+function glinf_validate_taxonomy_url_base( array $taxonomy, array $items, array $taxonomies ): string {
+	return glinf_validate_url_base( 'taxonomy', $taxonomy['slug'], $taxonomy['url_base'], $items, $taxonomies );
 }
 
 /**

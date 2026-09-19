@@ -75,7 +75,7 @@ function glinf_taxonomies_redirect( array $args = array() ): never {
  * @return array<string, array{type: string, text: string}>
  */
 function glinf_taxonomies_get_messages(): array {
-	return array(
+	$messages = array(
 		'saved'         => array(
 			'type' => 'success',
 			'text' => __( 'Taxonomy saved.', 'gl-infinite-theme' ),
@@ -121,6 +121,8 @@ function glinf_taxonomies_get_messages(): array {
 			'text' => __( 'The taxonomy could not be saved. Please try again.', 'gl-infinite-theme' ),
 		),
 	);
+
+	return $messages + glinf_entities_get_url_base_messages();
 }
 
 /**
@@ -432,12 +434,13 @@ function glinf_render_taxonomy_form( array $taxonomy, bool $is_edit, string $not
 							if ( $is_edit ) {
 								esc_html_e( 'The slug cannot be changed after creation: it identifies the terms in the database.', 'gl-infinite-theme' );
 							} else {
-								esc_html_e( '3 to 26 characters: lowercase letters, numbers and underscores, starting with a letter. It is used in the address of the term archives (underscores become hyphens) and cannot be changed later.', 'gl-infinite-theme' );
+								esc_html_e( '3 to 26 characters: lowercase letters, numbers and underscores, starting with a letter. It cannot be changed later. By default it is also used in the address of the term archives (underscores become hyphens): see URL base.', 'gl-infinite-theme' );
 							}
 							?>
 						</p>
 					</td>
 				</tr>
+				<?php glinf_entities_render_url_base_row( 'taxonomy', $taxonomy, $is_edit ); ?>
 				<tr>
 					<th scope="row"><label for="glinf-taxonomy-singular"><?php esc_html_e( 'Singular name', 'gl-infinite-theme' ); ?></label></th>
 					<td>
@@ -506,7 +509,8 @@ function glinf_render_taxonomy_form( array $taxonomy, bool $is_edit, string $not
  * Whatever the client sends for the slug of an existing taxonomy is ignored:
  * the taxonomy is identified by the hidden original slug and the slug is
  * immutable, as it is what ties the terms to the taxonomy. The attached
- * entities are a whitelist filter over the entities that exist.
+ * entities are a whitelist filter over the entities that exist. The URL base,
+ * unlike the slug, can change on update (see glinf_validate_url_base()).
  *
  * @return void
  */
@@ -542,6 +546,9 @@ function glinf_handle_save_taxonomy(): void {
 	}
 	if ( '' === $error ) {
 		$error = glinf_validate_taxonomy_fields( $taxonomy );
+	}
+	if ( '' === $error ) {
+		$error = glinf_validate_taxonomy_url_base( $taxonomy, $config['items'], $taxonomies );
 	}
 
 	if ( '' !== $error ) {

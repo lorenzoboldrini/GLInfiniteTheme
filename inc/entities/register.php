@@ -152,7 +152,7 @@ function glinf_register_entity( array $entity ): void {
 			'supports'        => array() === $entity['supports'] ? false : $entity['supports'],
 			'capability_type' => 'post',
 			'rewrite'         => array(
-				'slug'       => glinf_entity_rewrite_slug( $entity['slug'] ),
+				'slug'       => glinf_entity_url_base( $entity ),
 				'with_front' => false,
 			),
 		)
@@ -189,7 +189,7 @@ function glinf_register_taxonomy( array $taxonomy ): void {
 			'show_admin_column' => true,
 			'rewrite'           => array(
 				// A flat segment ("/genre/rock/") cannot be mistaken for a single post URL.
-				'slug'         => glinf_taxonomy_rewrite_slug( $taxonomy['slug'] ),
+				'slug'         => glinf_taxonomy_url_base( $taxonomy ),
 				'with_front'   => false,
 				'hierarchical' => $taxonomy['hierarchical'],
 			),
