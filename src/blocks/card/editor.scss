@@ -1,0 +1,20 @@
+// Editor-only styles for glinf/card.
+.wp-block-glinf-card {
+	// Keep empty RichText fields clickable and their placeholders readable.
+	.glinf-card__title,
+	.glinf-card__text {
+		min-block-size: 1lh;
+	}
+
+	[data-rich-text-placeholder]::after {
+		opacity: 0.75;
+	}
+
+	// The label is a span in the editor (a link would add a tab stop and
+	// navigate away): repeat the global link look from theme.json.
+	span.glinf-card__link {
+		color: var(--wp--preset--color--accent);
+		text-decoration: underline;
+		cursor: text;
+	}
+}

@@ -1,0 +1,108 @@
+// Front-end and editor styles for glinf/card.
+// Nothing visual is hardcoded: every value comes from theme.json presets
+// (--wp--preset--*) or design tokens (--wp--custom--*).
+// The card reuses the exact --wp--custom--card--* tokens of the
+// core/post-template card and of glinf/cpt-grid, so each Style Variation
+// restyles it with no change here: Fumetto gets thick borders and offset
+// shadows, Minimal a plain outline.
+// Defaults sit in :where() (zero specificity) so colors, spacing, typography,
+// border and shadow chosen through block supports (inline styles) always win.
+
+:where(.wp-block-glinf-card) {
+	gap: var(--wp--preset--spacing--30);
+	border: var(--wp--custom--card--border, none);
+	border-radius: var(--wp--custom--card--radius, 0);
+	padding: var(--wp--custom--card--padding, 0);
+	box-shadow: var(--wp--custom--card--shadow, none);
+	background: var(--wp--custom--card--background, transparent);
+	transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+// The hover effect is only for cards that actually go somewhere.
+:where(.wp-block-glinf-card.is-linked:hover) {
+	box-shadow: var(--wp--custom--card--hover-shadow, none);
+	transform: var(--wp--custom--card--hover-transform, none);
+}
+
+:where(.glinf-card__image) {
+	border-radius: var(--wp--custom--radius--sm);
+}
+
+.wp-block-glinf-card {
+	// Anchor for the stretched link below.
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	// Lets the card shrink inside a flex or grid parent (reflow at 320px).
+	min-width: 0;
+	overflow-wrap: break-word;
+
+	// Global styles already shorten transitions; this keeps the block safe
+	// when used alone.
+
+	@media (prefers-reduced-motion: reduce) {
+		transition: none;
+
+		&.is-linked:hover {
+			transform: none;
+		}
+	}
+
+	.glinf-card__image {
+		display: block;
+		width: 100%;
+		max-width: 100%;
+		height: auto;
+		aspect-ratio: 16 / 9;
+		object-fit: cover;
+	}
+
+	// Flex children do not collapse margins: spacing comes from the card gap.
+	.glinf-card__title,
+	.glinf-card__text {
+		margin: 0;
+	}
+
+	// theme.json sets a heading color that would otherwise stop the title
+	// from following the text color chosen for the block.
+	.glinf-card__title {
+		color: inherit;
+	}
+
+	// The label link keeps the global link look (color, underline). It hugs its
+	// text so the focus ring does not span the whole card.
+	.glinf-card__link {
+		align-self: flex-start;
+	}
+
+	// When the title is the link it reads as a title, not as a link.
+	.glinf-card__title .glinf-card__link {
+		color: inherit;
+		text-decoration: none;
+
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+
+	// Stretched link: the whole card is clickable through a single tab stop.
+	// The focus ring stays on the link itself.
+	&.is-linked .glinf-card__link::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+	}
+
+	// Text for screen readers only (e.g. "opens in a new tab").
+	.glinf-card__sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		margin: -1px;
+		padding: 0;
+		border: 0;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+}

@@ -1,0 +1,79 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "glinf/card",
+	"version": "0.1.0",
+	"title": "Card",
+	"category": "design",
+	"icon": "id-alt",
+	"description": "A standalone card with an image, a title, a short text and an optional link. The look follows the active Style Variation.",
+	"keywords": [ "card", "teaser", "image", "link", "box" ],
+	"textdomain": "gl-infinite-theme",
+	"attributes": {
+		"mediaId": {
+			"type": "integer",
+			"minimum": 0,
+			"default": 0
+		},
+		"title": {
+			"type": "string",
+			"default": ""
+		},
+		"text": {
+			"type": "string",
+			"default": ""
+		},
+		"linkUrl": {
+			"type": "string",
+			"default": ""
+		},
+		"linkLabel": {
+			"type": "string",
+			"default": ""
+		},
+		"linkNewTab": {
+			"type": "boolean",
+			"default": false
+		},
+		"titleLevel": {
+			"type": "integer",
+			"enum": [ 2, 3, 4, 5, 6 ],
+			"default": 3
+		}
+	},
+	"example": {
+		"attributes": {
+			"title": "Card title",
+			"text": "A short text that introduces the content behind the link.",
+			"linkUrl": "#",
+			"linkLabel": "Read more"
+		}
+	},
+	"supports": {
+		"html": false,
+		"anchor": true,
+		"color": {
+			"background": true,
+			"text": true,
+			"link": true
+		},
+		"spacing": {
+			"margin": true,
+			"padding": true
+		},
+		"__experimentalBorder": {
+			"color": true,
+			"radius": true,
+			"style": true,
+			"width": true
+		},
+		"shadow": true,
+		"typography": {
+			"fontSize": true
+		}
+	},
+	"render": "file:./render.php",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css"
+}
