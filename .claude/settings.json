@@ -89,6 +89,7 @@
 			"Bash(git cherry-pick *)",
 			"Bash(git revert *)",
 
+			"Bash(mysql *)",
 			"Bash(wp db query *)",
 			"Bash(wp db import *)",
 			"Bash(wp search-replace *)",
@@ -153,7 +154,13 @@
 			"Read(**/*.sql)",
 			"Read(**/*.sql.gz)",
 			"Read(**/uploads/**)",
-			"Read(**/.git/**)"
+			"Read(**/.git/**)",
+
+			"Bash(*wp-config*)",
+			"Bash(* .env)",
+			"Bash(* .env.*)",
+			"Bash(*/.env)",
+			"Bash(*/.env.*)"
 		]
 	}
 }

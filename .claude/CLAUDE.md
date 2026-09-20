@@ -64,7 +64,7 @@ Regole di i18n: ogni stringa visibile è traducibile. I testi traducibili **non*
 6. **Database**: solo `$wpdb->prepare()` (o API WP_Query/WP_Meta/Options). Mai concatenare input in SQL.
 7. Meta registrati con `register_post_meta()` con `sanitize_callback` e `auth_callback`.
 8. Niente `eval()`, `unserialize()` su input utente, `extract()`, `$_REQUEST` grezzo; upload solo via `wp_handle_upload()`.
-9. Nessun segreto nel repo (chiavi, token, `.env`, `wp-config.php`). Nessuna chiamata a servizi esterni non dichiarata (privacy/GDPR).
+9. Nessun segreto nel repo (chiavi, token, `.env`, `wp-config.php`). Nessuna chiamata a servizi esterni non dichiarata (privacy/GDPR). Claude non legge `wp-config.php`, `.env`, chiavi, certificati o dump SQL **in nessun modo, nemmeno dalla shell** (`grep`, `cat`, script): `.claude/settings.json` lo nega con regole `Read(...)` e `Bash(*wp-config*)`, e `mysql` chiede conferma. Per controlli sul DB si usa uno script che carica `wp-load.php` senza stampare nulla della configurazione, oppure li esegue l'utente.
 10. Dipendenze: `npm audit` e `composer audit` prima di ogni release.
 
 ## Performance
