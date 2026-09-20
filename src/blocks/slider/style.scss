@@ -27,6 +27,14 @@
 	gap: var(--wp--preset--spacing--20);
 }
 
+// Reset of the native button border. elements.button of the base theme.json
+// defines no border, so without a Style Variation the browser would draw its
+// own 2px outset one. The variations set width, style and color through
+// :root :where(.wp-element-button) (higher specificity than this), so they win.
+:where(.glinf-slider__button, .glinf-slider__dot) {
+	border: 0;
+}
+
 .wp-block-glinf-slider {
 	// Never wider than its container: the scrolling stays inside the track
 	// (reflow at 320px, no horizontal scroll of the page).
