@@ -1,0 +1,55 @@
+// Front-end and editor styles for glinf/stats-counter.
+// Nothing visual is hardcoded: every value comes from theme.json presets
+// (--wp--preset--*) or design tokens (--wp--custom--*). The look of each
+// figure (card, number, label) lives in the glinf/stat styles, which reuse the
+// --wp--custom--card--* tokens, so each Style Variation restyles the whole
+// block with no change here: Fumetto gets thick borders, offset shadows and a
+// display font, Minimal a plain outline.
+// The font size of the block is the size of the numbers: the figures inherit
+// it (the labels use their own preset). The default sits in :where() (zero
+// specificity), so the font size chosen through the block supports wins.
+// The columns come from custom properties set inline by render.php (validated
+// integers): --glinf-stats-columns for wide screens and
+// --glinf-stats-columns-medium (capped at 2) for tablets.
+
+:where(.wp-block-glinf-stats-counter) {
+	font-size: var(--wp--preset--font-size--xx-large);
+}
+
+:where(.glinf-stats-counter__list) {
+	// blockGap cannot be used here: without the "layout" support it is not
+	// serialized, so the gap follows a spacing preset instead.
+	gap: var(--wp--preset--spacing--50);
+}
+
+.wp-block-glinf-stats-counter {
+	// Never wider than its container (reflow at 320px).
+	min-width: 0;
+	max-width: 100%;
+
+	// One column below ~600px, then two, then the chosen count. minmax(0, 1fr)
+	// lets long numbers shrink instead of forcing a horizontal scroll.
+	.glinf-stats-counter__list {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		margin: 0;
+		padding: 0;
+
+		@media (min-width: 600px) {
+			grid-template-columns: repeat(var(--glinf-stats-columns-medium, 2), minmax(0, 1fr));
+		}
+
+		@media (min-width: 900px) {
+			grid-template-columns: repeat(var(--glinf-stats-columns, 3), minmax(0, 1fr));
+		}
+	}
+
+	// A background chosen for the whole block is the background of every
+	// figure: their card must not paint its own token background on top of
+	// it, because the text color was picked for the block background and
+	// would lose its contrast on the card. A background set on one figure
+	// (inline style or preset class) still wins.
+	&.has-background .wp-block-glinf-stat {
+		background: transparent;
+	}
+}

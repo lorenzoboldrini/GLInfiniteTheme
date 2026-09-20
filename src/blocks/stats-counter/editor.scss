@@ -1,0 +1,8 @@
+// Editor-only styles for glinf/stats-counter.
+.wp-block-glinf-stats-counter {
+
+	// The "Add stat" button sits below the grid, which is styled by style.scss.
+	.glinf-stats-counter__editor-actions {
+		margin-block-start: var(--wp--preset--spacing--40);
+	}
+}

@@ -1,0 +1,99 @@
+// Front-end and editor styles for glinf/stat.
+// Nothing visual is hardcoded: the figure reuses the --wp--custom--card--*
+// tokens of the core/post-template card, of glinf/cpt-grid and of glinf/card,
+// so each Style Variation restyles it with no change here: Fumetto gets a
+// thick border and an offset shadow, Minimal a plain outline. With the base
+// tokens (no border, no padding, transparent background) the figure is just
+// its number and label.
+// The number takes the size of the block (see glinf/stats-counter) and the
+// "display" font family when the active variation defines one (Fumetto);
+// otherwise it inherits the body font. Colors are never set: the text color
+// chosen through block supports (inline styles) always wins and keeps the
+// contrast it was picked for.
+// Defaults sit in :where() (zero specificity) so colors, spacing, border and
+// shadow chosen through block supports always win.
+
+// The number has two stacked layers in the same grid cell (see render.php):
+// ".glinf-stat__final" is the real text and always sets the size of the box,
+// so the width never changes; ".glinf-stat__live" is the decorative count-up.
+// While counting, the final layer is only made transparent (never hidden,
+// display: none or visibility: hidden would remove it from the accessibility
+// tree) and the live layer is shown over it.
+
+:where(.wp-block-glinf-stat) {
+	gap: var(--wp--preset--spacing--20);
+	border: var(--wp--custom--card--border, none);
+	border-radius: var(--wp--custom--card--radius, 0);
+	padding: var(--wp--custom--card--padding, 0);
+	box-shadow: var(--wp--custom--card--shadow, none);
+	background: var(--wp--custom--card--background, transparent);
+	text-align: center;
+}
+
+:where(.glinf-stat__label) {
+	font-size: var(--wp--preset--font-size--medium);
+}
+
+:where(.glinf-stat__value) {
+	font-family: var(--wp--preset--font-family--display, inherit);
+	font-weight: bolder;
+	// A display font with a single weight must not get a fake bold.
+	font-synthesis-weight: none;
+}
+
+.wp-block-glinf-stat {
+	// The number is shown above its label, while the label comes first in the
+	// document (a <dt> before its <dd>): a screen reader reads "label, value".
+	display: flex;
+	flex-direction: column-reverse;
+	box-sizing: border-box;
+	// Lets the figure shrink inside the grid (reflow at 320px).
+	min-width: 0;
+	overflow-wrap: break-word;
+
+	.glinf-stat__label,
+	.glinf-stat__value {
+		margin: 0;
+	}
+
+	.glinf-stat__value {
+		display: grid;
+		// Same width for every digit: the counting does not shake.
+		font-variant-numeric: tabular-nums;
+	}
+
+	.glinf-stat__final,
+	.glinf-stat__live {
+		grid-area: 1 / 1;
+		min-width: 0;
+		overflow-wrap: anywhere;
+	}
+
+	// Without JavaScript the live layer is never shown.
+	.glinf-stat__live {
+		display: none;
+	}
+
+	&.is-counting {
+
+		.glinf-stat__final {
+			opacity: 0;
+		}
+
+		.glinf-stat__live {
+			display: block;
+		}
+	}
+
+	// On paper there is no count-up: the real value is printed.
+	@media print {
+
+		&.is-counting .glinf-stat__final {
+			opacity: 1;
+		}
+
+		&.is-counting .glinf-stat__live {
+			display: none;
+		}
+	}
+}

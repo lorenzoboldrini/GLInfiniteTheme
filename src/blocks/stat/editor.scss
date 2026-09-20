@@ -1,0 +1,49 @@
+// Editor-only styles for glinf/stat.
+.wp-block-glinf-stat {
+
+	// Keep the empty label clickable and its placeholder readable.
+	.glinf-stat__label {
+		min-block-size: 1lh;
+	}
+
+	[data-rich-text-placeholder]::after {
+		opacity: 0.75;
+	}
+
+	// The number, prefix and suffix are plain fields that look like the text
+	// of the final value, so the canvas is a faithful preview.
+	.glinf-stat__final {
+		display: flex;
+		align-items: baseline;
+		justify-content: center;
+	}
+
+	.glinf-stat__input {
+		box-sizing: content-box;
+		min-inline-size: 1ch;
+		max-inline-size: 100%;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+		box-shadow: none;
+		color: inherit;
+		font: inherit;
+		letter-spacing: inherit;
+		text-align: inherit;
+		// Fields are as wide as their text.
+		field-sizing: content;
+	}
+
+	.glinf-stat__input::placeholder {
+		color: inherit;
+		opacity: 0.5;
+	}
+
+	.glinf-stat__input:focus {
+		box-shadow: none;
+		outline: 1px solid var(--wp-admin-theme-color, currentcolor);
+		outline-offset: 2px;
+	}
+}

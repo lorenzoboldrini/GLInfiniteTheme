@@ -1,0 +1,84 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "glinf/stats-counter",
+	"version": "0.1.0",
+	"title": "Stats Counter",
+	"category": "design",
+	"icon": "chart-bar",
+	"description": "A grid of key figures that count up when they scroll into view. The final value is always in the page text, and nothing moves for visitors who prefer reduced motion. The block font size sets the size of the numbers. The look follows the active Style Variation.",
+	"keywords": [ "stats", "statistics", "counter", "numbers", "figures", "count up", "metrics" ],
+	"textdomain": "gl-infinite-theme",
+	"attributes": {
+		"columns": {
+			"type": "integer",
+			"minimum": 1,
+			"maximum": 6,
+			"default": 3
+		},
+		"duration": {
+			"type": "number",
+			"minimum": 0.5,
+			"maximum": 5,
+			"default": 2
+		},
+		"ariaLabel": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"providesContext": {
+		"glinf/statsDuration": "duration"
+	},
+	"example": {
+		"innerBlocks": [
+			{
+				"name": "glinf/stat",
+				"attributes": {
+					"value": 1200,
+					"suffix": "+",
+					"label": "Happy customers"
+				}
+			},
+			{
+				"name": "glinf/stat",
+				"attributes": {
+					"value": 98.5,
+					"decimals": 1,
+					"suffix": "%",
+					"label": "Satisfaction rate"
+				}
+			},
+			{
+				"name": "glinf/stat",
+				"attributes": {
+					"value": 24,
+					"suffix": "/7",
+					"label": "Support"
+				}
+			}
+		]
+	},
+	"supports": {
+		"html": false,
+		"anchor": true,
+		"align": [ "wide", "full" ],
+		"color": {
+			"background": true,
+			"text": true
+		},
+		"spacing": {
+			"margin": true,
+			"padding": true
+		},
+		"typography": {
+			"fontSize": true
+		},
+		"interactivity": true
+	},
+	"render": "file:./render.php",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css",
+	"viewScriptModule": "file:./view.js"
+}
