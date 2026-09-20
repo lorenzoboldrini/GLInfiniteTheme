@@ -1,0 +1,107 @@
+// Front-end and editor styles for glinf/faq-item.
+// Nothing visual is hardcoded: the item (a <details>) is the card and reuses
+// the --wp--custom--card--* tokens of the core/post-template card, of
+// glinf/cpt-grid and of glinf/card, so each Style Variation restyles it with
+// no change here: Fumetto gets a thick border and an offset shadow, Minimal a
+// plain outline. With the base tokens (no border, no padding, transparent
+// background) the item is just its question and answer.
+// The card padding goes on the summary and on the answer, not on the <details>:
+// this way the whole card row is the click target, not only its inner box.
+// Defaults sit in :where() (zero specificity) so the text and background
+// colors chosen through block supports (inline styles) always win.
+// Structure (front end and editor are the same, see edit.js): the item
+// wrapper holds .glinf-faq-item__summary (with the question heading) and
+// .glinf-faq-item__answer. The indicator lives in _indicator.scss.
+@use "indicator";
+
+:where(.wp-block-glinf-faq-item) {
+	border: var(--wp--custom--card--border, none);
+	border-radius: var(--wp--custom--card--radius, 0);
+	box-shadow: var(--wp--custom--card--shadow, none);
+	background: var(--wp--custom--card--background, transparent);
+}
+
+:where(.glinf-faq-item__summary, .glinf-faq-item__answer) {
+	padding: var(--wp--custom--card--padding, 0);
+}
+
+// The focus ring is the global one (theme.json). It follows the corners of the
+// summary, so the summary takes the ones of the card. "inherit" would not
+// work: in a <details> the summary is slotted and its parent is not the card.
+:where(.glinf-faq-item__summary) {
+	border-radius: var(--wp--custom--card--radius, 0);
+}
+
+.wp-block-glinf-faq-item {
+	box-sizing: border-box;
+	// Lets the item shrink inside a flex or grid parent (reflow at 320px).
+	min-width: 0;
+	overflow-wrap: break-word;
+
+	.glinf-faq-item__summary {
+		box-sizing: border-box;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--wp--preset--spacing--40);
+		// Touch target: twice the large spacing step is at least 44px tall, and
+		// it grows with the text size.
+		min-block-size: calc(var(--wp--preset--spacing--50) * 2);
+		cursor: pointer;
+		// Removes the native marker: the indicator below replaces it.
+		list-style: none;
+
+		&::-webkit-details-marker {
+			display: none;
+		}
+
+		&::after {
+
+			@include indicator.glinf-faq-indicator;
+		}
+	}
+
+	// Open: the summary and the answer sit closer, and only the top corners of
+	// the summary stay rounded (the answer continues the card).
+	&[open] > .glinf-faq-item__summary {
+		padding-block-end: var(--wp--preset--spacing--30);
+		border-end-start-radius: 0;
+		border-end-end-radius: 0;
+
+		&::after {
+
+			@include indicator.glinf-faq-indicator-open;
+		}
+	}
+
+	// The card padding above is the only space around the content.
+	.glinf-faq-item__answer {
+		padding-block-start: 0;
+	}
+
+	// The question is a heading inside the summary. It takes the size of the
+	// accordion (so the font size chosen for the block applies) and the color
+	// of the item, while keeping the family, weight and case of the theme
+	// headings.
+	.glinf-faq-item__question {
+		flex: 1 1 auto;
+		min-width: 0;
+		margin: 0;
+		color: inherit;
+		font-size: inherit;
+	}
+
+	// Blocks of the answer: spacing from a preset, none at the edges.
+	.glinf-faq-item__answer > * {
+		margin-block: 0;
+	}
+
+	.glinf-faq-item__answer > * + * {
+		margin-block-start: var(--wp--preset--spacing--30);
+	}
+
+	.glinf-faq-item__answer img {
+		max-width: 100%;
+		height: auto;
+	}
+}

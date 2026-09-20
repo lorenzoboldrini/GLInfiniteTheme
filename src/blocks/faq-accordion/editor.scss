@@ -1,0 +1,11 @@
+// Editor-only styles for glinf/faq-accordion.
+.wp-block-glinf-faq-accordion {
+
+	// The editor puts the items in an inner list container, which takes the
+	// same layout as the accordion on the front end.
+	.glinf-faq-accordion__list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--wp--preset--spacing--30);
+	}
+}

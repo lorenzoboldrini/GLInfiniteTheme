@@ -1,0 +1,53 @@
+// Editor-only styles for glinf/faq-item.
+@use "indicator";
+
+.wp-block-glinf-faq-item {
+
+	// In the canvas the summary row is a plain element with editable text, not
+	// a real <summary>: the whole row must not look clickable, and the
+	// chevron belongs to the toggle button.
+	.glinf-faq-item__summary {
+		cursor: default;
+
+		&::after {
+			content: none;
+		}
+	}
+
+	// Keep the empty question clickable and its placeholder readable.
+	.glinf-faq-item__question {
+		min-block-size: 1lh;
+	}
+
+	[data-rich-text-placeholder]::after {
+		opacity: 0.75;
+	}
+
+	// The button that shows and hides the answer in the canvas. Its hit area is
+	// as large as the summary target; the chevron is the same as the front end.
+	.glinf-faq-item__toggle {
+		display: flex;
+		flex: none;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+		inline-size: calc(var(--wp--preset--spacing--50) * 2);
+		block-size: calc(var(--wp--preset--spacing--50) * 2);
+		margin: 0;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		color: inherit;
+		cursor: pointer;
+
+		&::after {
+
+			@include indicator.glinf-faq-indicator;
+		}
+
+		&[aria-expanded="true"]::after {
+
+			@include indicator.glinf-faq-indicator-open;
+		}
+	}
+}

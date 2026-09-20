@@ -1,0 +1,20 @@
+// Front-end and editor styles for glinf/faq-accordion.
+// Nothing visual is hardcoded: the gap between the items is a spacing preset
+// and the look of each item comes from the --wp--custom--card--* tokens (see
+// the glinf/faq-item block), so each Style Variation restyles the accordion
+// with no change here.
+// The gap is a default in :where() (zero specificity), not the blockGap
+// support: the block has no layout support, so blockGap would do nothing.
+// Structure: a wrapper that holds the items (<details> on the front end).
+
+:where(.wp-block-glinf-faq-accordion) {
+	display: flex;
+	flex-direction: column;
+	gap: var(--wp--preset--spacing--30);
+}
+
+.wp-block-glinf-faq-accordion {
+	// Never wider than its container (reflow at 320px).
+	min-width: 0;
+	max-width: 100%;
+}

@@ -1,0 +1,97 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "glinf/faq-accordion",
+	"version": "0.1.0",
+	"title": "FAQ Accordion",
+	"category": "design",
+	"icon": "editor-help",
+	"description": "Frequently asked questions as a list of questions that open to show their answer. Built on the native details element, so it works without JavaScript. The look follows the active Style Variation.",
+	"keywords": [ "faq", "accordion", "questions", "answers", "collapse", "details" ],
+	"textdomain": "gl-infinite-theme",
+	"attributes": {
+		"allowMultiple": {
+			"type": "boolean",
+			"default": true
+		},
+		"titleLevel": {
+			"type": "integer",
+			"enum": [ 2, 3, 4, 5, 6 ],
+			"default": 3
+		},
+		"ariaLabel": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"providesContext": {
+		"glinf/faqTitleLevel": "titleLevel"
+	},
+	"example": {
+		"innerBlocks": [
+			{
+				"name": "glinf/faq-item",
+				"attributes": {
+					"question": "How do I get started?",
+					"open": true
+				},
+				"innerBlocks": [
+					{
+						"name": "core/paragraph",
+						"attributes": {
+							"content": "Pick a plan, create your account and follow the guided setup. It takes a few minutes."
+						}
+					}
+				]
+			},
+			{
+				"name": "glinf/faq-item",
+				"attributes": {
+					"question": "Can I change my plan later?"
+				},
+				"innerBlocks": [
+					{
+						"name": "core/paragraph",
+						"attributes": {
+							"content": "Yes, you can upgrade or downgrade at any time."
+						}
+					}
+				]
+			},
+			{
+				"name": "glinf/faq-item",
+				"attributes": {
+					"question": "Do you offer support?"
+				},
+				"innerBlocks": [
+					{
+						"name": "core/paragraph",
+						"attributes": {
+							"content": "Our team answers every message within one working day."
+						}
+					}
+				]
+			}
+		]
+	},
+	"supports": {
+		"html": false,
+		"anchor": true,
+		"align": [ "wide", "full" ],
+		"color": {
+			"background": true,
+			"text": true
+		},
+		"spacing": {
+			"margin": true,
+			"padding": true
+		},
+		"typography": {
+			"fontSize": true
+		}
+	},
+	"render": "file:./render.php",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css"
+}
